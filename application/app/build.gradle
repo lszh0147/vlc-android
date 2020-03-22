@@ -3,12 +3,18 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 android {
     packagingOptions {
+//        exclude 'META-INF/main.kotlin_module'
+//        pickFirst 'lib/armeabi-v7a/libc++_shared.so'
+//        pickFirst 'lib/armeabi/libc++_shared.so'
+//        pickFirst 'lib/arm64-v8a/libc++_shared.so'
+//        pickFirst 'lib/x86/libc++_shared.so'
+//        pickFirst 'lib/x86_64/libc++_shared.so'
         exclude 'META-INF/main.kotlin_module'
-        pickFirst 'lib/armeabi-v7a/libc++_shared.so'
-        pickFirst 'lib/armeabi/libc++_shared.so'
+        exclude 'lib/armeabi-v7a/libc++_shared.so'
+        exclude 'lib/armeabi/libc++_shared.so'
         pickFirst 'lib/arm64-v8a/libc++_shared.so'
-        pickFirst 'lib/x86/libc++_shared.so'
-        pickFirst 'lib/x86_64/libc++_shared.so'
+        exclude 'lib/x86/libc++_shared.so'
+        exclude 'lib/x86_64/libc++_shared.so'
     }
 
     dexOptions {
@@ -96,21 +102,30 @@ android {
 
     splits {
         abi {
-            def isReleaseBuild = false
-            gradle.startParameter.taskNames.find {
-                // Enable split for release builds in different build flavors
-                // (assemblePaidRelease, assembleFreeRelease, etc.).
-                if (it.toLowerCase() ==~ /assemble.*Release/.toLowerCase()) {
-                    isReleaseBuild = true
-                    return true // break
-                }
-                return false // continue
-            }
-            enable isReleaseBuild
+//            def isReleaseBuild = false
+//            gradle.startParameter.taskNames.find {
+//                // Enable split for release builds in different build flavors
+//                // (assemblePaidRelease, assembleFreeRelease, etc.).
+//                if (it.toLowerCase() ==~ /assemble.*Release/.toLowerCase()) {
+//                    isReleaseBuild = true
+//                    return true // break
+//                }
+//                return false // continue
+//            }
+//            enable isReleaseBuild
+//            reset()
+//            include "x86", "x86_64", "armeabi-v7a", "arm64-v8a"
+//            //universalApk !isReleaseBuild
+
+            enable true
             reset()
-            include "x86", "x86_64", "armeabi-v7a", "arm64-v8a"
-//            universalApk !isReleaseBuild
+            //只打出以下两个包
+            include 'arm64-v8a'
+            //是否打出一个全量的包
+            universalApk false
+
         }
+
     }
 
     def abiCodes = ['x86': 5, 'x86_64': 8, 'armeabi-v7a': 4, 'arm64-v8a': 7]
@@ -119,7 +134,8 @@ android {
         //Custom APK name and versionCode
         variant.outputs.each { output ->
             def outputAbi = output.getFilter(com.android.build.OutputFile.ABI)
-            def abiName = System.getenv('GRADLE_ABI')?.toLowerCase() ?: "all"
+//            def abiName = System.getenv('GRADLE_ABI')?.toLowerCase() ?: "all"
+            def abiName = "arm64-v8a"
             if (outputAbi != null) abiName = outputAbi
             output.versionCodeOverride = 10000000 + defaultConfig.versionCode + abiCodes.get(abiName, 0)
             def outputName = "VLC-Android-"
