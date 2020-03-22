@@ -58,23 +58,30 @@ android {
             storealias=androiddebugkey
             storepwd=android
              */
-            if (project.hasProperty('keyStoreFile')) {
-                storeFile file(project.findProperty('keyStoreFile'))
-                keyAlias project.findProperty('storealias')
-                if (System.getenv('PASSWORD_KEYSTORE') != null && !System.getenv('PASSWORD_KEYSTORE').isEmpty()) {
-                    storePassword = System.getenv('PASSWORD_KEYSTORE')
-                    keyPassword = System.getenv('PASSWORD_KEYSTORE')
-                } else {
-                    storePassword project.findProperty('storepwd')
-                    keyPassword project.findProperty('storepwd')
-                }
-            }
+
+//            if (project.hasProperty('keyStoreFile')) {
+//                storeFile file(project.findProperty('keyStoreFile'))
+//                keyAlias project.findProperty('storealias')
+//                if (System.getenv('PASSWORD_KEYSTORE') != null && !System.getenv('PASSWORD_KEYSTORE').isEmpty()) {
+//                    storePassword = System.getenv('PASSWORD_KEYSTORE')
+//                    keyPassword = System.getenv('PASSWORD_KEYSTORE')
+//                } else {
+//                    storePassword project.findProperty('storepwd')
+//                    keyPassword project.findProperty('storepwd')
+//                }
+//            }
+            storeFile file("TestKey.jks")
+            storePassword "123321"
+
+            keyAlias "Test"
+            keyPassword "123321"
         }
     }
 
     buildTypes {
         release {
             minifyEnabled false
+            signingConfig = signingConfigs.release
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             kotlinOptions.freeCompilerArgs = ['-Xno-param-assertions']
         }
@@ -84,10 +91,12 @@ android {
             matchingFallbacks = ['release']
         }
         debug {
+            signingConfig = signingConfigs.release
             applicationIdSuffix ".debug"
             jniDebuggable true
         }
         dev {
+            signingConfig = signingConfigs.release
             initWith debug
             matchingFallbacks = ['debug']
         }

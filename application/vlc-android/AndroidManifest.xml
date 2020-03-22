@@ -7,14 +7,15 @@
     <uses-sdk tools:overrideLibrary="com.jraska.livedata.ktx, com.jraska.livedata"/>
 
     <uses-permission
-        android:name="android.permission.READ_LOGS"
-        android:maxSdkVersion="18"/> <!-- android:maxSdkVersion="15" -->
+<!--        android:name="android.permission.READ_LOGS"
+        android:maxSdkVersion="18"/>
+    -->
     <!-- vibration on audioplayer buttons long press -->
     <uses-permission android:name="android.permission.VIBRATE"/> <!-- used for setting ringtone -->
     <uses-permission android:name="android.permission.WRITE_SETTINGS"/> <!-- STORAGE -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/> <!-- Internet -->
     <uses-permission android:name="android.permission.INTERNET"/> <!-- Launch recommendations service once device is booted -->
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/> <!-- Audio search on TV -->
+<!--    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/> &lt;!&ndash; Audio search on TV &ndash;&gt;-->
     <uses-permission android:name="android.permission.RECORD_AUDIO"/> <!-- USe foreground services -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/> <!-- normal -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
@@ -580,7 +581,7 @@
             android:enabled="true"
             android:exported="true">
             <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+<!--                <action android:name="android.intent.action.BOOT_COMPLETED"/>-->
                 <action android:name="android.media.tv.action.PREVIEW_PROGRAM_ADDED_TO_WATCH_NEXT"/>
                 <action android:name="android.media.tv.ACTION_WATCH_NEXT_PROGRAM_BROWSABLE_DISABLED"/>
                 <action android:name="android.media.tv.action.PREVIEW_PROGRAM_BROWSABLE_DISABLED"/>
