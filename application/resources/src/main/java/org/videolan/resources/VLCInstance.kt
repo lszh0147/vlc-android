@@ -30,7 +30,7 @@ import org.videolan.libvlc.FactoryManager
 import org.videolan.libvlc.interfaces.ILibVLC
 import org.videolan.libvlc.interfaces.ILibVLCFactory
 import org.videolan.libvlc.util.VLCUtil
-import org.videolan.resources.util.VLCCrashHandler
+//import org.videolan.resources.util.VLCCrashHandler
 
 @ObsoleteCoroutinesApi
 object VLCInstance {
@@ -46,7 +46,7 @@ object VLCInstance {
     @Throws(IllegalStateException::class)
     operator fun get(ctx: Context): ILibVLC {
         if (sLibVLC == null) {
-            Thread.setDefaultUncaughtExceptionHandler(VLCCrashHandler())
+//            Thread.setDefaultUncaughtExceptionHandler(VLCCrashHandler())
 
             val context = ctx.applicationContext
             if (!VLCUtil.hasCompatibleCPU(context)) {

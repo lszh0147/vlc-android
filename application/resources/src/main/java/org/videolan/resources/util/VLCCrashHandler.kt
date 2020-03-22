@@ -44,9 +44,9 @@ class VLCCrashHandler : UncaughtExceptionHandler {
         val trace = ex.stackTrace
         val trace2 = arrayOfNulls<StackTraceElement>(trace.size + 3)
         System.arraycopy(trace, 0, trace2, 0, trace.size)
-        trace2[trace.size + 0] = StackTraceElement("Android", "MODEL", android.os.Build.MODEL, -1)
+        trace2[trace.size + 0] = StackTraceElement("Android", "MODEL", android.os.Build.UNKNOWN, -1)
         trace2[trace.size + 1] = StackTraceElement("Android", "VERSION", android.os.Build.VERSION.RELEASE, -1)
-        trace2[trace.size + 2] = StackTraceElement("Android", "FINGERPRINT", android.os.Build.FINGERPRINT, -1)
+        trace2[trace.size + 2] = StackTraceElement("Android", "FINGERPRINT", android.os.Build.UNKNOWN, -1)
         ex.stackTrace = trace2
 
         ex.printStackTrace(printWriter)
