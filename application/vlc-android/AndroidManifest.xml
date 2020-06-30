@@ -15,12 +15,12 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/> <!-- Internet -->
     <uses-permission android:name="android.permission.INTERNET"/> <!-- Launch recommendations service once device is booted -->
 <!--    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/> &lt;!&ndash; Audio search on TV &ndash;&gt;-->
-    <uses-permission android:name="android.permission.RECORD_AUDIO"/> <!-- USe foreground services -->
+<!--    <uses-permission android:name="android.permission.RECORD_AUDIO"/> &lt;!&ndash; USe foreground services &ndash;&gt;-->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/> <!-- normal -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
-    <uses-permission android:name="android.permission.BLUETOOTH"/>
+<!--    <uses-permission android:name="android.permission.BLUETOOTH"/>-->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
     <uses-permission android:name="org.videolan.vlc.permission.READ_EXTENSION_DATA"/>
     <uses-permission android:name="com.android.providers.tv.permission.READ_EPG_DATA"/>
@@ -478,20 +478,20 @@
         <activity
             android:name=".gui.SearchActivity"
             android:theme="@style/Theme.VLC"/>
-        <activity
-            android:name=".gui.SendCrashActivity"
-            android:label="@string/vlc_reporter"
-            android:theme="@style/Theme.VLC.SendCrashDialog"
-            android:icon="@mipmap/ic_launcher_reporter"
-            android:launchMode="singleTask"
-            android:excludeFromRecents="true"
-            android:enabled="false">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
+<!--        <activity-->
+<!--            android:name=".gui.SendCrashActivity"-->
+<!--            android:label="@string/vlc_reporter"-->
+<!--            android:theme="@style/Theme.VLC.SendCrashDialog"-->
+<!--            android:icon="@mipmap/ic_launcher_reporter"-->
+<!--            android:launchMode="singleTask"-->
+<!--            android:excludeFromRecents="true"-->
+<!--            android:enabled="false">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.MAIN"/>-->
 
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
-        </activity>
+<!--                <category android:name="android.intent.category.LAUNCHER"/>-->
+<!--            </intent-filter>-->
+<!--        </activity>-->
         <activity
             android:name=".gui.BetaWelcomeActivity"
             android:theme="@style/Theme.VLC.SendCrashDialog"/>

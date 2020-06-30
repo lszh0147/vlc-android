@@ -41,7 +41,7 @@ import org.videolan.resources.VLCInstance
 import org.videolan.tools.AppScope
 import org.videolan.tools.Settings
 import org.videolan.vlc.BuildConfig
-import org.videolan.vlc.gui.SendCrashActivity
+//import org.videolan.vlc.gui.SendCrashActivity
 import org.videolan.vlc.gui.helpers.AudioUtil
 import org.videolan.vlc.gui.helpers.NotificationHelper
 import org.videolan.vlc.util.DialogDelegate
@@ -85,17 +85,17 @@ class AppSetupDelegate : AppDelegate,
 
     // init operations executed in background threads
     private fun Context.backgroundInit() {
-        Thread(Runnable {
-            AppContextProvider.setLocale(Settings.getInstance(this).getString("set_locale", ""))
-
-            AppScope.launch(Dispatchers.IO) {
-
-                if (!VLCInstance.testCompatibleCPU(AppContextProvider.appContext)) return@launch
-                Dialog.setCallbacks(VLCInstance.getInstance(this@backgroundInit), DialogDelegate)
-            }
-            packageManager.setComponentEnabledSetting(ComponentName(this, SendCrashActivity::class.java),
-                    if (BuildConfig.BETA) PackageManager.COMPONENT_ENABLED_STATE_ENABLED else PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP)
-            SettingsMigration.migrateSettings(this)
-        }).start()
+//        Thread(Runnable {
+//            AppContextProvider.setLocale(Settings.getInstance(this).getString("set_locale", ""))
+//
+//            AppScope.launch(Dispatchers.IO) {
+//
+//                if (!VLCInstance.testCompatibleCPU(AppContextProvider.appContext)) return@launch
+//                Dialog.setCallbacks(VLCInstance.getInstance(this@backgroundInit), DialogDelegate)
+//            }
+//            packageManager.setComponentEnabledSetting(ComponentName(this, SendCrashActivity::class.java),
+//                    if (BuildConfig.BETA) PackageManager.COMPONENT_ENABLED_STATE_ENABLED else PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP)
+//            SettingsMigration.migrateSettings(this)
+//        }).start()
     }
 }

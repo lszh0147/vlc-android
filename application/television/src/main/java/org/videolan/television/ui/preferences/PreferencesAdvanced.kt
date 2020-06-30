@@ -42,7 +42,7 @@ import org.videolan.resources.VLCInstance
 import org.videolan.tools.putSingle
 import org.videolan.vlc.BuildConfig
 import org.videolan.vlc.R
-import org.videolan.vlc.gui.DebugLogActivity
+//import org.videolan.vlc.gui.DebugLogActivity
 import org.videolan.vlc.gui.helpers.UiTools
 import org.videolan.vlc.gui.helpers.hf.StoragePermissionsDelegate.Companion.getWritePermission
 import org.videolan.vlc.util.FileUtils
@@ -82,8 +82,8 @@ class PreferencesAdvanced : BasePreferenceFragment(), SharedPreferences.OnShared
         if (preference.key == null || ctx == null) return false
         when (preference.key) {
             "debug_logs" -> {
-                val intent = Intent(ctx, DebugLogActivity::class.java)
-                startActivity(intent)
+//                val intent = Intent(ctx, DebugLogActivity::class.java)
+//                startActivity(intent)
                 return true
             }
             "clear_history" -> {

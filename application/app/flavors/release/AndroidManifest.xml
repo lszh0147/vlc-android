@@ -46,8 +46,8 @@
         <activity android:name="${applicationId}.gui.DebugLogActivity"
             android:theme="@style/Theme.VLC"
             android:launchMode="singleTop" />
-        <service android:name="${applicationId}.DebugLogService"
-            android:process=":logger" />
+<!--        <service android:name="${applicationId}.DebugLogService"-->
+<!--            android:process=":logger" />-->
     </application>
 
 </manifest>

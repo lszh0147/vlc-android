@@ -50,7 +50,7 @@ import org.videolan.medialibrary.stubs.StubMedialibrary
 import org.videolan.resources.*
 import org.videolan.resources.util.dbExists
 import org.videolan.tools.*
-import org.videolan.vlc.gui.SendCrashActivity
+//import org.videolan.vlc.gui.SendCrashActivity
 import org.videolan.vlc.gui.helpers.NotificationHelper
 import org.videolan.vlc.repository.DirectoryRepository
 import org.videolan.vlc.util.FileUtils
@@ -88,22 +88,22 @@ class MediaParsingService : LifecycleService(), DevicesDiscoveryCb {
     private lateinit var notificationActor : SendChannel<Notification>
 
     private val exceptionHandler = if (BuildConfig.BETA) Medialibrary.MedialibraryExceptionHandler { context, errMsg, _ ->
-        val intent = Intent(applicationContext, SendCrashActivity::class.java).apply {
-            putExtra(CRASH_ML_CTX, context)
-            putExtra(CRASH_ML_MSG, errMsg)
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
+//        val intent = Intent(applicationContext, SendCrashActivity::class.java).apply {
+//            putExtra(CRASH_ML_CTX, context)
+//            putExtra(CRASH_ML_MSG, errMsg)
+//            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+//        }
         Log.wtf(TAG, "medialibrary reported unhandled exception: -----------------")
         // Lock the Medialibrary thread during DB extraction.
-        runBlocking {
-            SendCrashActivity.job = Job()
-            try {
-                startActivity(intent)
-                SendCrashActivity.job?.join()
-            } catch (e: Exception) {
-                SendCrashActivity.job = null
-            }
-        }
+//        runBlocking {
+//            SendCrashActivity.job = Job()
+//            try {
+//                startActivity(intent)
+//                SendCrashActivity.job?.join()
+//            } catch (e: Exception) {
+//                SendCrashActivity.job = null
+//            }
+//        }
     } else if (BuildConfig.DEBUG) Medialibrary.MedialibraryExceptionHandler { context, errMsg, _ ->
         throw IllegalStateException("$context:\n$errMsg")
     } else  null
