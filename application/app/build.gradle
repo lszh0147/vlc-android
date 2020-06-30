@@ -129,7 +129,7 @@ android {
             enable true
             reset()
             //只打出以下两个包
-            include 'arm64-v8a'
+            include "x86", "arm64-v8a"
             //是否打出一个全量的包
             universalApk false
 
