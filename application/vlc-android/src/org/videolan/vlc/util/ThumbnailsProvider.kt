@@ -22,6 +22,7 @@ import org.videolan.medialibrary.media.MediaLibraryItem
 import org.videolan.resources.AppContextProvider
 import org.videolan.tools.BitmapCache
 import org.videolan.tools.CloseableUtils
+import org.videolan.tools.sanitizePath
 import org.videolan.vlc.gui.helpers.AudioUtil.readCoverBitmap
 import org.videolan.vlc.gui.helpers.BitmapUtil
 import org.videolan.vlc.gui.helpers.UiTools
@@ -45,7 +46,7 @@ object ThumbnailsProvider {
     @WorkerThread
     fun getFolderThumbnail(folder: Folder, width: Int): Bitmap? {
         val media = folder.media(Folder.TYPE_FOLDER_VIDEO, Medialibrary.SORT_DEFAULT, true, 4, 0).filterNotNull()
-        return getComposedImage("folder:${folder.title}", media, width)
+        return getComposedImage("folder:${folder.mMrl.sanitizePath()}", media, width)
     }
 
     @WorkerThread
@@ -84,8 +85,14 @@ object ThumbnailsProvider {
         if (cacheBM != null) return cacheBM
         if (hasCache && File(thumbPath).exists()) return readCoverBitmap(thumbPath, width)
         if (media.isThumbnailGenerated) return null
-        val bitmap = synchronized(lock) {
+        var bitmap = synchronized(lock) {
             ThumbnailUtils.createVideoThumbnail(filePath, MediaStore.Video.Thumbnails.MINI_KIND)
+        }
+        if (bitmap != null) {
+            val emptyBitmap = Bitmap.createBitmap(bitmap.width, bitmap.height, bitmap.config)
+            if (bitmap.sameAs(emptyBitmap)) { // myBitmap is empty/blank3
+                bitmap = null
+            }
         }
         if (bitmap != null) {
             BitmapCache.addBitmapToMemCache(thumbPath, bitmap)

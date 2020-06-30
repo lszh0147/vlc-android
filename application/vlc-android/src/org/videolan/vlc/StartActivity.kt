@@ -97,7 +97,7 @@ class StartActivity : FragmentActivity() {
                 val intent = Intent(this, BetaWelcomeActivity::class.java)
                 intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
                 startActivityForResult(intent, SEND_CRASH_RESULT)
-                Settings.getInstance(this).edit().putBoolean(BETA_WELCOME, true).apply()
+                Settings.getInstance(this).putSingle(BETA_WELCOME, true)
                 return
             }
         } catch (ignored: Exception) {}
@@ -142,7 +142,8 @@ class StartActivity : FragmentActivity() {
         val firstRun = savedVersionNumber == -1
         val upgrade = firstRun || savedVersionNumber != currentVersionNumber
         val tv = showTvUi()
-        if (upgrade && (tv || !firstRun)) settings.edit().putInt(PREF_FIRST_RUN, currentVersionNumber).apply()
+        if (upgrade && (tv || !firstRun)) settings.putSingle(PREF_FIRST_RUN, currentVersionNumber)
+        val removeOldDevices = savedVersionNumber in 3028201..3028399
         // Route search query
         if (Intent.ACTION_SEARCH == action || ACTION_SEARCH_GMS == action) {
             intent.setClassName(applicationContext, if (tv) TV_SEARCH_ACTIVITY else MOBILE_SEARCH_ACTIVITY)
@@ -157,7 +158,7 @@ class StartActivity : FragmentActivity() {
             val data = intent.data
             val path = data!!.path
             if (TextUtils.equals(path, "/$TV_CHANNEL_PATH_APP"))
-                startApplication(tv, firstRun, upgrade, 0)
+                startApplication(tv, firstRun, upgrade, 0, removeOldDevices)
             else if (TextUtils.equals(path, "/$TV_CHANNEL_PATH_VIDEO")) {
                 val id = java.lang.Long.valueOf(data.getQueryParameter(TV_CHANNEL_QUERY_VIDEO_ID)!!)
                 MediaUtils.openMediaNoUi(this, id)
@@ -167,9 +168,10 @@ class StartActivity : FragmentActivity() {
             if (target == R.id.ml_menu_last_playlist)
                 PlaybackService.loadLastAudio(this)
             else
-                startApplication(tv, firstRun, upgrade, target)
+                startApplication(tv, firstRun, upgrade, target, removeOldDevices)
         }
         FileUtils.copyLua(applicationContext, upgrade)
+        FileUtils.copyHrtfs(applicationContext, upgrade)
         if (AndroidDevices.watchDevices) this.enableStorageMonitoring()
         finish()
     }
@@ -181,7 +183,7 @@ class StartActivity : FragmentActivity() {
         }
     }
 
-    private fun startApplication(tv: Boolean, firstRun: Boolean, upgrade: Boolean, target: Int) {
+    private fun startApplication(tv: Boolean, firstRun: Boolean, upgrade: Boolean, target: Int, removeDevices:Boolean = false) {
         val settings = Settings.getInstance(this@StartActivity)
         val onboarding = !tv && !settings.getBoolean(ONBOARDING_DONE_KEY, false)
         // Start Medialibrary from background to workaround Dispatchers.Main causing ANR
@@ -194,8 +196,8 @@ class StartActivity : FragmentActivity() {
                     if (Build.VERSION.SDK_INT == Build.VERSION_CODES.P && !awaitAppIsForegroung()) {
                         return@launch
                     }
-                    this@StartActivity.startMedialibrary(firstRun, upgrade, true)
-                    if (onboarding) settings.edit().putBoolean(ONBOARDING_DONE_KEY, true).apply()
+                    this@StartActivity.startMedialibrary(firstRun, upgrade, true, removeDevices)
+                    if (onboarding) settings.putSingle(ONBOARDING_DONE_KEY, true)
                 }
             }.start()
             val mainIntent = Intent(Intent.ACTION_VIEW)

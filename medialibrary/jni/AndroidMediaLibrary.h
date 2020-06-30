@@ -32,7 +32,9 @@ public:
 
     medialibrary::InitializeResult initML(const std::string& dbPath, const std::string& thumbsPath);
     void start();
-    bool addDevice(const std::string& uuid, const std::string& path, bool removable);
+    bool isDeviceKnown(const std::string& uuid, const std::string& path, bool removable);
+    bool deleteRemovableDevices();
+    void addDevice(const std::string& uuid, const std::string& path, bool removable);
     void clearDatabase(bool restorePlaylists);
     std::vector<std::tuple<std::string, std::string, bool>> devices();
     bool removeDevice(const std::string& uuid, const std::string& path);
@@ -72,8 +74,10 @@ public:
     medialibrary::Query<medialibrary::IMedia> searchFromGenre( int64_t genreId, const std::string& query, const medialibrary::QueryParameters* params = nullptr );
     medialibrary::Query<medialibrary::IAlbum> searchAlbumsFromGenre( int64_t genreId, const std::string& query, const medialibrary::QueryParameters* params = nullptr );
     medialibrary::Query<medialibrary::IMedia> searchFromPLaylist( int64_t playlistId, const std::string& query, const medialibrary::QueryParameters* params = nullptr );
+    medialibrary::Query<medialibrary::IFolder> searchFolders( const std::string& query, const medialibrary::QueryParameters* params = nullptr );
     medialibrary::Query<medialibrary::IMedia> searchFromFolder( int64_t folderId, const std::string& query, medialibrary::IMedia::Type type, const medialibrary::QueryParameters* params = nullptr );
-    medialibrary::MediaPtr media(long id);
+    medialibrary::Query<medialibrary::IMediaGroup> searchVideoGroups( const std::string& query, const medialibrary::QueryParameters* params = nullptr );
+        medialibrary::MediaPtr media(long id);
     medialibrary::MediaPtr media(const std::string& mrl);
     medialibrary::MediaPtr addMedia(const std::string& mrl);
     bool removeExternalMedia(long id);
@@ -105,7 +109,18 @@ public:
     medialibrary::Query<medialibrary::IMedia> mediaFromMediaGroup(const int64_t groupId, const medialibrary::QueryParameters* params );
     medialibrary::Query<medialibrary::IMedia> searchFromMediaGroup(const int64_t groupId, const std::string& query, const medialibrary::QueryParameters* params );
     void onMediaGroupsAdded(std::vector<medialibrary::MediaGroupPtr> mediaGroups );
-    medialibrary::MediaGroupPtr videoGroup(const int64_t groupId );
+    medialibrary::MediaGroupPtr videoGroup( const int64_t groupId );
+    bool groupAddId( const int64_t groupId, const int64_t mediaId );
+    bool groupRemoveId( const int64_t groupId, const int64_t mediaId );
+    std::string groupName( const int64_t groupId );
+    bool groupRename( const int64_t groupId, const std::string& name );
+    bool groupUserInteracted(const int64_t groupId );
+    int64_t groupDuration(const int64_t groupId );
+    bool groupDestroy(const int64_t groupId );
+    medialibrary::MediaGroupPtr createMediaGroup( std::string name );
+    medialibrary::MediaGroupPtr createMediaGroup( std::vector<int64_t> mediaIds );
+    bool regroupAll( );
+    bool regroup(int64_t mediaId);
     void onMediaGroupsModified( std::set<int64_t> mediaGroupsIds );
     void onMediaGroupsDeleted( std::set<int64_t> mediaGroupsIds );
     void onBookmarksAdded( std::vector<medialibrary::BookmarkPtr> );
@@ -169,7 +184,6 @@ private:
     fields *p_fields;
     medialibrary::IMediaLibrary* p_ml;
     std::shared_ptr<AndroidDeviceLister> p_lister;
-    medialibrary::IDeviceListerCb* p_DeviceListerCb = nullptr;
     bool m_paused = false;
     uint32_t m_nbDiscovery = 0, m_progress = 0, m_mediaAddedType = 0, m_mediaUpdatedType = 0;
 };

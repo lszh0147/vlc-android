@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="org.videolan.vlc"
-    android:installLocation="auto">
+    package="org.videolan.vlc">
 
     <uses-sdk tools:overrideLibrary="com.jraska.livedata.ktx, com.jraska.livedata"/>
 
@@ -67,7 +66,7 @@
             android:resource="@drawable/icon"/>
         <meta-data
             android:name="android.max_aspect"
-            android:value="3"/>
+            android:value="3.0"/>
         <meta-data
             android:name="android.allow_multiple_resumed_activities"
             android:value="true" />
@@ -475,7 +474,7 @@
             android:theme="@style/Theme.VLC"/>
         <activity
             android:name=".gui.InfoActivity"
-            android:theme="@style/Theme.VLC.Info"/>
+            android:theme="@style/Theme.VLC"/>
         <activity
             android:name=".gui.SearchActivity"
             android:theme="@style/Theme.VLC"/>

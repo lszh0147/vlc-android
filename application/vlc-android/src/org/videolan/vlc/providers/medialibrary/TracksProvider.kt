@@ -21,7 +21,9 @@
 package org.videolan.vlc.providers.medialibrary
 
 import android.content.Context
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
 import org.videolan.medialibrary.interfaces.Medialibrary
 import org.videolan.medialibrary.interfaces.media.*
 import org.videolan.medialibrary.media.MediaLibraryItem
@@ -38,7 +40,7 @@ class TracksProvider(val parent : MediaLibraryItem?, context: Context, model: So
     override fun canSortByLastModified() = parent !is Playlist
     override fun canSortByReleaseDate() = parent !is Playlist
     override fun canSortByName() = parent !is Playlist
-    override fun canSortByFileNameName() = parent is Album
+    override fun canSortByFileNameName() = parent !is Playlist
     override fun canSortByTrackId() = parent is Album
 
     init {
@@ -67,7 +69,8 @@ class TracksProvider(val parent : MediaLibraryItem?, context: Context, model: So
             is Playlist -> parent.searchTracks(model.filterQuery, sort, desc, loadSize, startposition)
             else -> medialibrary.searchAudio(model.filterQuery, sort, desc, loadSize, startposition)
         }
-        return list.also { completeHeaders(it, startposition) }
+        model.viewModelScope.launch { completeHeaders(list, startposition) }
+        return list
     }
 
     override fun getTotalCount() = if (model.filterQuery == null) when (parent) {

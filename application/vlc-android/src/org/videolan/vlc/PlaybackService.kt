@@ -52,11 +52,9 @@ import androidx.media.MediaBrowserServiceCompat
 import androidx.media.session.MediaButtonReceiver
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.actor
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.videolan.libvlc.MediaPlayer
 import org.videolan.libvlc.RendererItem
 import org.videolan.libvlc.interfaces.IMedia
@@ -459,8 +457,9 @@ class PlaybackService : MediaBrowserServiceCompat(), LifecycleOwner {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate() {
         dispatcher.onServicePreSuperOnCreate()
-        super.onCreate()
         setupScope()
+        forceForeground()
+        super.onCreate()
         NotificationHelper.createNotificationChannels(applicationContext)
         settings = Settings.getInstance(this)
         playlistManager = PlaylistManager(this)
@@ -495,7 +494,7 @@ class PlaybackService : MediaBrowserServiceCompat(), LifecycleOwner {
         restartPlayer.observe(this, Observer { restartMediaPlayer() })
         headSetDetection.observe(this, Observer { detectHeadset(it) })
         equalizer.observe(this, Observer { setEqualizer(it) })
-        instanceChannel.safeOffer(this)
+        serviceFlow.value = this
     }
 
     private fun setupScope() {
@@ -523,7 +522,7 @@ class PlaybackService : MediaBrowserServiceCompat(), LifecycleOwner {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (AndroidUtil.isOOrLater && !isForeground) forceForeground()
+        forceForeground()
         dispatcher.onServicePreSuperOnStart()
         setupScope()
         when (intent?.action) {
@@ -563,7 +562,7 @@ class PlaybackService : MediaBrowserServiceCompat(), LifecycleOwner {
     }
 
     override fun onDestroy() {
-        instanceChannel.safeOffer(null)
+        serviceFlow.value = null
         dispatcher.onServicePreSuperOnDestroy()
         super.onDestroy()
         handler.removeCallbacksAndMessages(null)
@@ -587,12 +586,16 @@ class PlaybackService : MediaBrowserServiceCompat(), LifecycleOwner {
 
     @TargetApi(Build.VERSION_CODES.O)
     private fun forceForeground() {
-        val ctx = this@PlaybackService
-        val stopped = PlayerController.playbackState == PlaybackStateCompat.STATE_STOPPED
+        if (!AndroidUtil.isOOrLater || isForeground) return
+        val ctx = applicationContext
+        val stopped = PlayerController.playbackState == PlaybackStateCompat.STATE_STOPPED || PlayerController.playbackState == PlaybackStateCompat.STATE_NONE
         val notification = if (this::notification.isInitialized && !stopped) notification
-        else NotificationHelper.createPlaybackNotification(ctx, false,
-                ctx.resources.getString(R.string.loading), "", "", null,
-                false, true, mediaSession.sessionToken, sessionPendingIntent)
+        else {
+            val pi = if (::playlistManager.isInitialized) sessionPendingIntent else null
+            NotificationHelper.createPlaybackNotification(ctx, false,
+                    ctx.resources.getString(R.string.loading), "", "", null,
+                    false, true, null, pi)
+        }
         startForeground(3, notification)
         isForeground = true
         if (stopped) lifecycleScope.launch { hideNotification(true) }
@@ -754,7 +757,7 @@ class PlaybackService : MediaBrowserServiceCompat(), LifecycleOwner {
 
     private fun hideNotification(remove: Boolean): Boolean {
         notificationShowing = false
-        return cbActor.safeOffer(HideNotification(remove))
+        return if (::cbActor.isInitialized) cbActor.safeOffer(HideNotification(remove)) else false
     }
 
     private fun hideNotificationInternal(remove: Boolean) {
@@ -994,10 +997,7 @@ class PlaybackService : MediaBrowserServiceCompat(), LifecycleOwner {
     }
 
     fun loadLastPlaylist(type: Int) {
-        lifecycleScope.launch {
-            awaitMedialibraryStarted()
-            if (!playlistManager.loadLastPlaylist(type)) stopService(Intent(applicationContext, PlaybackService::class.java))
-        }
+        if (!playlistManager.loadLastPlaylist(type)) stopService(Intent(applicationContext, PlaybackService::class.java))
     }
 
     fun showToast(text: String, duration: Int, isError: Boolean = false) {
@@ -1028,7 +1028,7 @@ class PlaybackService : MediaBrowserServiceCompat(), LifecycleOwner {
     @MainThread
     fun removeCallback(cb: Callback) = cbActor.safeOffer(CbRemove(cb))
 
-    fun restartMediaPlayer() = playlistManager.player.restart()
+    fun restartMediaPlayer() = playlistManager.restart()
 
     fun saveMediaMeta() = playlistManager.saveMediaMeta()
 
@@ -1056,7 +1056,7 @@ class PlaybackService : MediaBrowserServiceCompat(), LifecycleOwner {
     }
 
     @MainThread
-    fun load(mediaList: List<MediaWrapper>, position: Int) = playlistManager.load(mediaList, position)
+    fun load(mediaList: List<MediaWrapper>, position: Int) = lifecycleScope.launch { playlistManager.load(mediaList, position) }
 
     private fun updateMediaQueue() = lifecycleScope.launch(start = CoroutineStart.UNDISPATCHED) {
         if (!this@PlaybackService::mediaSession.isInitialized) initMediaSession()
@@ -1111,14 +1111,14 @@ class PlaybackService : MediaBrowserServiceCompat(), LifecycleOwner {
      */
 
     @MainThread
-    fun showWithoutParse(index: Int) {
+    fun showWithoutParse(index: Int, forPopup:Boolean = false) {
         playlistManager.setVideoTrackEnabled(false)
         val media = playlistManager.getMedia(index) ?: return
         // Show an URI without interrupting/losing the current stream
         if (BuildConfig.DEBUG) Log.v(TAG, "Showing index " + index + " with playing URI " + media.uri)
         playlistManager.currentIndex = index
         notifyTrackChanged()
-        PlaylistManager.showAudioPlayer.value = !isVideoPlaying
+        PlaylistManager.showAudioPlayer.value = !isVideoPlaying && !forPopup
         showNotification()
     }
 
@@ -1129,7 +1129,7 @@ class PlaybackService : MediaBrowserServiceCompat(), LifecycleOwner {
     @MainThread
     fun switchToPopup(index: Int) {
         playlistManager.saveMediaMeta()
-        showWithoutParse(index)
+        showWithoutParse(index, true)
         showPopup()
     }
 
@@ -1314,11 +1314,9 @@ class PlaybackService : MediaBrowserServiceCompat(), LifecycleOwner {
     }
 
     companion object {
-        private val instanceChannel = ConflatedBroadcastChannel<PlaybackService?>(null)
+        val serviceFlow = MutableStateFlow<PlaybackService?>(null)
         val instance : PlaybackService?
-            get() = instanceChannel.valueOrNull
-        val serviceFlow : Flow<PlaybackService?>
-            get() = instanceChannel.asFlow()
+            get() = serviceFlow.value
 
         val renderer = RendererLiveData()
         val restartPlayer = LiveEvent<Boolean>()

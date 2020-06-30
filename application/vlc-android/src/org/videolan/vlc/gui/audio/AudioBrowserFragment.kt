@@ -44,16 +44,17 @@ import org.videolan.medialibrary.interfaces.media.MediaWrapper
 import org.videolan.medialibrary.media.MediaLibraryItem
 import org.videolan.resources.CTX_PLAY_ALL
 import org.videolan.resources.KEY_AUDIO_CURRENT_TAB
+import org.videolan.resources.KEY_AUDIO_LAST_PLAYLIST
 import org.videolan.tools.KEY_ARTISTS_SHOW_ALL
 import org.videolan.tools.RESULT_RESTART
 import org.videolan.tools.Settings
+import org.videolan.tools.putSingle
 import org.videolan.vlc.R
 import org.videolan.vlc.gui.AudioPlayerContainerActivity
 import org.videolan.vlc.gui.ContentActivity
 import org.videolan.vlc.gui.PlaylistActivity
 import org.videolan.vlc.gui.SecondaryActivity
 import org.videolan.vlc.gui.view.EmptyLoadingState
-import org.videolan.vlc.gui.view.RecyclerSectionItemDecoration
 import org.videolan.vlc.gui.view.RecyclerSectionItemGridDecoration
 import org.videolan.vlc.media.MediaUtils
 import org.videolan.vlc.providers.medialibrary.MedialibraryProvider
@@ -129,16 +130,11 @@ class AudioBrowserFragment : BaseAudioBrowser<AudioBrowserViewModel>() {
         }
 
         for (i in 0 until MODE_TOTAL) {
-            setupLayoutManager(i)
+            setupLayoutManager(viewModel.providersInCard[i], lists[i], viewModel.providers[i] as MedialibraryProvider<MediaLibraryItem>, adapters[i], spacing)
             (lists[i].layoutManager as LinearLayoutManager).recycleChildrenOnDetach = true
             val list = lists[i]
             list.adapter = adapters[i]
             list.addOnScrollListener(scrollListener)
-            if (viewModel.providersInCard[i]) {
-                val lp = list.layoutParams
-                lp.width = ViewGroup.LayoutParams.MATCH_PARENT
-                list.layoutParams = lp
-            }
         }
         viewPager.setOnTouchListener(swipeFilter)
         swipeRefreshLayout.setOnRefreshListener {
@@ -170,23 +166,6 @@ class AudioBrowserFragment : BaseAudioBrowser<AudioBrowserViewModel>() {
         }
     }
 
-    private fun setupLayoutManager(index: Int) {
-        if (lists[index].itemDecorationCount > 0) {
-            lists[index].removeItemDecorationAt(0)
-        }
-        when (viewModel.providersInCard[index]) {
-            true -> {
-                adapters[index].cardSize = RecyclerSectionItemGridDecoration.getItemSize(requireActivity().getScreenWidth(), nbColumns, spacing)
-                displayListInGrid(lists[index], adapters[index], viewModel.providers[index] as MedialibraryProvider<MediaLibraryItem>, spacing)
-            }
-            else -> {
-                adapters[index].cardSize = -1
-                lists[index].addItemDecoration(RecyclerSectionItemDecoration(resources.getDimensionPixelSize(R.dimen.recycler_section_header_height), true, viewModel.providers[index]))
-                lists[index].layoutManager = LinearLayoutManager(activity)
-            }
-        }
-    }
-
     override fun onSaveInstanceState(outState: Bundle) {
         val positions = ArrayList<Int>(MODE_TOTAL)
         for (i in 0 until MODE_TOTAL) {
@@ -211,7 +190,7 @@ class AudioBrowserFragment : BaseAudioBrowser<AudioBrowserViewModel>() {
     }
 
     private fun setupProvider(index: Int = viewModel.currentTab) {
-        val provider = viewModel.providers[index]
+        val provider = viewModel.providers[index.coerceIn(0, viewModel.providers.size-1)]
         if (provider.loading.hasObservers()) return
         provider.pagedList.observe(viewLifecycleOwner, Observer { items ->
             @Suppress("UNCHECKED_CAST")
@@ -224,12 +203,16 @@ class AudioBrowserFragment : BaseAudioBrowser<AudioBrowserViewModel>() {
         })
         provider.loading.observe(viewLifecycleOwner, Observer { loading ->
             if (loading == null || currentTab != index) return@Observer
-            setRefreshing(loading)
-            if (loading) empty_loading.state = EmptyLoadingState.LOADING
-            else {
-                swipeRefreshLayout.isEnabled = (getCurrentRV().layoutManager as LinearLayoutManager).findFirstVisibleItemPosition() <= 0
-                songs_fast_scroller.setRecyclerView(getCurrentRV(), viewModel.providers[currentTab])
+            setRefreshing(loading) { refresh ->
+                if (refresh) updateEmptyView()
+                else {
+                    swipeRefreshLayout.isEnabled = (getCurrentRV().layoutManager as LinearLayoutManager).findFirstVisibleItemPosition() <= 0
+                    songs_fast_scroller.setRecyclerView(getCurrentRV(), viewModel.providers[currentTab])
+                }
             }
+        })
+        provider.liveHeaders.observe(viewLifecycleOwner, Observer {
+            lists[currentTab].invalidateItemDecorations()
         })
     }
 
@@ -240,7 +223,7 @@ class AudioBrowserFragment : BaseAudioBrowser<AudioBrowserViewModel>() {
     }
 
     override fun onPrepareOptionsMenu(menu: Menu) {
-        menu.findItem(R.id.ml_menu_last_playlist)?.isVisible = true
+        menu.findItem(R.id.ml_menu_last_playlist)?.isVisible = settings.contains(KEY_AUDIO_LAST_PLAYLIST)
         (viewModel.providers[currentTab]).run {
             menu.findItem(R.id.ml_menu_sortby).isVisible = canSortByName()
             menu.findItem(R.id.ml_menu_sortby_filename).isVisible = canSortByFileNameName()
@@ -252,6 +235,7 @@ class AudioBrowserFragment : BaseAudioBrowser<AudioBrowserViewModel>() {
             menu.findItem(R.id.ml_menu_sortby_number).isVisible = false
             menu.findItem(R.id.ml_menu_display_grid).isVisible = currentTab in 0..2 && !viewModel.providersInCard[currentTab]
             menu.findItem(R.id.ml_menu_display_list).isVisible = currentTab in 0..2 && viewModel.providersInCard[currentTab]
+            menu.findItem(R.id.ml_menu_sortby_media_number).isVisible = canSortByMediaNumber()
             val showAllArtistsItem = menu.findItem(R.id.artists_show_all_title)
             showAllArtistsItem.isVisible = currentTab == 0
             showAllArtistsItem.isChecked = Settings.getInstance(context).getBoolean(KEY_ARTISTS_SHOW_ALL, false)
@@ -263,15 +247,15 @@ class AudioBrowserFragment : BaseAudioBrowser<AudioBrowserViewModel>() {
         return when (item.itemId) {
             R.id.ml_menu_display_list, R.id.ml_menu_display_grid -> {
                 viewModel.providersInCard[currentTab] = item.itemId == R.id.ml_menu_display_grid
-                setupLayoutManager(currentTab)
+                setupLayoutManager(viewModel.providersInCard[currentTab], lists[currentTab], viewModel.providers[currentTab] as MedialibraryProvider<MediaLibraryItem>, adapters[currentTab], spacing)
                 lists[currentTab].adapter = adapters[currentTab]
                 activity?.invalidateOptionsMenu()
-                Settings.getInstance(requireActivity()).edit().putBoolean(viewModel.displayModeKeys[currentTab], item.itemId == R.id.ml_menu_display_grid).apply()
+                Settings.getInstance(requireActivity()).putSingle(viewModel.displayModeKeys[currentTab], item.itemId == R.id.ml_menu_display_grid)
                 true
             }
             R.id.artists_show_all_title -> {
                 item.isChecked = !Settings.getInstance(requireActivity()).getBoolean(KEY_ARTISTS_SHOW_ALL, true)
-                Settings.getInstance(requireActivity()).edit().putBoolean(KEY_ARTISTS_SHOW_ALL, item.isChecked).apply()
+                Settings.getInstance(requireActivity()).putSingle(KEY_ARTISTS_SHOW_ALL, item.isChecked)
                 viewModel.artistsProvider.showAll = item.isChecked
                 viewModel.refresh()
                 true
@@ -297,7 +281,7 @@ class AudioBrowserFragment : BaseAudioBrowser<AudioBrowserViewModel>() {
     override fun enableSearchOption() = true
 
     private fun updateEmptyView() {
-        empty_loading.state = if (empty) EmptyLoadingState.EMPTY else EmptyLoadingState.NONE
+        empty_loading.state = if (viewModel.providers[currentTab].loading.value == true && empty) EmptyLoadingState.LOADING else  if (empty) EmptyLoadingState.EMPTY else EmptyLoadingState.NONE
         setFabPlayShuffleAllVisibility()
     }
 
@@ -312,7 +296,7 @@ class AudioBrowserFragment : BaseAudioBrowser<AudioBrowserViewModel>() {
         setupProvider()
         super.onTabSelected(tab)
         songs_fast_scroller?.setRecyclerView(lists[tab.position], viewModel.providers[tab.position])
-        settings.edit().putInt(KEY_AUDIO_CURRENT_TAB, tab.position).apply()
+        settings.putSingle(KEY_AUDIO_CURRENT_TAB, tab.position)
         setRefreshing(viewModel.providers[currentTab].isRefreshing)
         activity?.invalidateOptionsMenu()
     }
@@ -327,7 +311,7 @@ class AudioBrowserFragment : BaseAudioBrowser<AudioBrowserViewModel>() {
         lists[tab.position].smoothScrollToPosition(0)
     }
 
-    override fun onCtxAction(position: Int, option: Int) {
+    override fun onCtxAction(position: Int, option: Long) {
         @Suppress("UNCHECKED_CAST")
         if (option == CTX_PLAY_ALL) MediaUtils.playAll(activity, viewModel.providers[currentTab] as MedialibraryProvider<MediaWrapper>, position, false)
         else super.onCtxAction(position, option)

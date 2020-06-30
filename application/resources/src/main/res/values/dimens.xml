@@ -34,6 +34,9 @@
     <dimen name="seek_margin_sides">8dp</dimen>
     <dimen name="time_margin_sides">16dp</dimen>
 
+    <dimen name="large_margins_center">8dp</dimen>
+    <dimen name="small_margins_sides">0dp</dimen>
+
 
     <dimen name="media_ctrl_margin_top">20dp</dimen>
     <dimen name="tv_overscan_vertical">27dp</dimen>
@@ -41,7 +44,7 @@
 
 
     <dimen name="video_pip_width">240dp</dimen>
-    <dimen name="video_pip_heigth">135dp</dimen>
+    <dimen name="video_pip_height">135dp</dimen>
 
     <!-- Adv options -->
     <dimen name="option_width">64dp</dimen>
@@ -80,7 +83,7 @@
     <dimen name="fastscroller_track_width">6dp</dimen>
     <dimen name="fastscroller_track_padding">5dp</dimen>
     <dimen name="audio_player_cover_margin">8dp</dimen>
-    <dimen name="audio_player_elevation">16dp</dimen>
+    <dimen name="audio_player_elevation">8dp</dimen>
     <dimen name="progress_layout_height">20dp</dimen>
     <dimen name="dialog_sd_wisard_width">320dp</dimen>
     <dimen name="dialog_sd_wisard_height">420dp</dimen>

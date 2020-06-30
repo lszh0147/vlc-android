@@ -8,6 +8,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import androidx.annotation.RequiresApi
 import androidx.databinding.ViewDataBinding
 import androidx.fragment.app.Fragment
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -25,9 +26,11 @@ import org.videolan.television.ui.browser.TvAdapterUtils
 import org.videolan.vlc.gui.DiffUtilAdapter
 import org.videolan.vlc.gui.helpers.getBitmapFromDrawable
 import org.videolan.vlc.gui.helpers.getMediaIconDrawable
+import org.videolan.vlc.gui.helpers.getTvIconRes
 import org.videolan.vlc.gui.view.FastScroller
 import org.videolan.vlc.interfaces.IEventsHandler
 import org.videolan.vlc.util.generateResolutionClass
+import org.videolan.vlc.util.getDescriptionSpan
 
 @ExperimentalCoroutinesApi
 @ObsoleteCoroutinesApi
@@ -119,7 +122,7 @@ class FileTvItemAdapter(private val eventsHandler: IEventsHandler<MediaLibraryIt
 
     private fun getProtocol(media: MediaWrapper) = if (media.type != MediaWrapper.TYPE_DIR) null else media.uri.scheme
 
-    @TargetApi(Build.VERSION_CODES.M)
+    @RequiresApi(Build.VERSION_CODES.M)
     inner class MediaItemTVViewHolder(
             binding: MediaBrowserTvItemBinding,
             override val eventsHandler: IEventsHandler<MediaLibraryItem>,
@@ -147,7 +150,7 @@ class FileTvItemAdapter(private val eventsHandler: IEventsHandler<MediaLibraryIt
                     }
                 }
             }
-            binding.container.clipToOutline = true
+            if (AndroidUtil.isLolliPopOrLater) binding.container.clipToOutline = true
         }
 
         override fun recycle() {
@@ -159,7 +162,6 @@ class FileTvItemAdapter(private val eventsHandler: IEventsHandler<MediaLibraryIt
 
         override fun setItem(item: MediaLibraryItem?) {
             binding.item = item
-            var isSquare = true
             var progress = 0
             var seen = 0L
             var description = item?.description
@@ -167,7 +169,6 @@ class FileTvItemAdapter(private val eventsHandler: IEventsHandler<MediaLibraryIt
             if (item is MediaWrapper) {
                 if (item.type == MediaWrapper.TYPE_VIDEO) {
                     resolution = generateResolutionClass(item.width, item.height) ?: ""
-                    isSquare = false
                     description = if (item.time == 0L) Tools.millisToString(item.length) else Tools.getProgressText(item)
                     binding.badge = resolution
                     seen = item.seen
@@ -185,7 +186,7 @@ class FileTvItemAdapter(private val eventsHandler: IEventsHandler<MediaLibraryIt
             }
 
             binding.progress = progress
-            binding.isSquare = isSquare
+            binding.isSquare = true
             binding.seen = seen
             binding.description = description
             if (showProtocol && item is MediaWrapper) binding.protocol = getProtocol(item)

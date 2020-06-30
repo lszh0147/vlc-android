@@ -24,20 +24,18 @@
 
 package org.videolan.vlc.gui.view
 
-import android.annotation.TargetApi
 import android.content.Context
 import android.graphics.PixelFormat
 import android.graphics.Point
-import android.os.Build
 import android.util.AttributeSet
 import android.view.*
-import android.widget.RelativeLayout
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.GestureDetectorCompat
 import org.videolan.libvlc.interfaces.IVLCVout
 import org.videolan.libvlc.util.AndroidUtil
 import org.videolan.vlc.R
 
-class PopupLayout : RelativeLayout, ScaleGestureDetector.OnScaleGestureListener, View.OnTouchListener {
+class PopupLayout : ConstraintLayout, ScaleGestureDetector.OnScaleGestureListener, View.OnTouchListener {
 
     private var vlcVout: IVLCVout? = null
     private var windowManager: WindowManager? = null
@@ -112,7 +110,7 @@ class PopupLayout : RelativeLayout, ScaleGestureDetector.OnScaleGestureListener,
         windowManager = context.applicationContext.getSystemService(Context.WINDOW_SERVICE) as WindowManager
 
         popupWidth = context.resources.getDimensionPixelSize(R.dimen.video_pip_width)
-        popupHeight = context.resources.getDimensionPixelSize(R.dimen.video_pip_heigth)
+        popupHeight = context.resources.getDimensionPixelSize(R.dimen.video_pip_height)
         val params = WindowManager.LayoutParams(
                 popupWidth,
                 popupHeight,

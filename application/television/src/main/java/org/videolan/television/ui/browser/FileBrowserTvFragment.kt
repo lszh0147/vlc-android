@@ -7,15 +7,17 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Parcelable
 import android.view.View
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.vectordrawable.graphics.drawable.VectorDrawableCompat
 import com.google.android.material.snackbar.Snackbar
-import kotlinx.coroutines.*
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.ObsoleteCoroutinesApi
+import kotlinx.coroutines.launch
 import org.videolan.libvlc.Dialog
 import org.videolan.medialibrary.MLServiceLocator
 import org.videolan.medialibrary.interfaces.Medialibrary
@@ -36,11 +38,15 @@ import org.videolan.vlc.gui.view.VLCDividerItemDecoration
 import org.videolan.vlc.interfaces.IEventsHandler
 import org.videolan.vlc.providers.BrowserProvider
 import org.videolan.vlc.repository.BrowserFavRepository
-import org.videolan.vlc.util.*
+import org.videolan.vlc.util.DialogDelegate
+import org.videolan.vlc.util.FileUtils
+import org.videolan.vlc.util.IDialogManager
+import org.videolan.vlc.util.isSchemeSupported
 import org.videolan.vlc.viewmodels.browser.*
 
 private const val TAG = "FileBrowserTvFragment"
-@UseExperimental(ObsoleteCoroutinesApi::class)
+
+@OptIn(ObsoleteCoroutinesApi::class)
 @ExperimentalCoroutinesApi
 class FileBrowserTvFragment : BaseBrowserTvFragment<MediaLibraryItem>(), PathAdapterListener, IDialogManager {
 
@@ -88,7 +94,8 @@ class FileBrowserTvFragment : BaseBrowserTvFragment<MediaLibraryItem>(), PathAda
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        (viewModel.provider as BrowserProvider).dataset.observe(viewLifecycleOwner, Observer { items ->
+        (viewModel as BrowserModel).dataset.observe(viewLifecycleOwner, Observer { items ->
+            if (items == null) return@Observer
             val lm = binding.list.layoutManager as LinearLayoutManager
             val selectedItem = lm.focusedChild
             submitList(items)
@@ -107,20 +114,15 @@ class FileBrowserTvFragment : BaseBrowserTvFragment<MediaLibraryItem>(), PathAda
 
             binding.headerList.layoutManager = GridLayoutManager(requireActivity(), nbColumns)
             headerAdapter.sortType = (viewModel as BrowserModel).sort
-            val headerItems = ArrayList<String>()
-            viewModel.provider.headers.run {
-                for (i in 0 until size()) headerItems.add(valueAt(i))
-            }
-            headerAdapter.items = headerItems
-            headerAdapter.notifyDataSetChanged()
+        })
+
+        viewModel.provider.liveHeaders.observe(viewLifecycleOwner, Observer {
+            updateHeaders(it)
+            binding.list.invalidateItemDecorations()
         })
 
         (viewModel.provider as BrowserProvider).loading.observe(viewLifecycleOwner, Observer {
             if (it) binding.emptyLoading.state = EmptyLoadingState.LOADING
-        })
-
-        (viewModel as BrowserModel).provider.liveHeaders.observe(viewLifecycleOwner, Observer {
-            headerAdapter.notifyDataSetChanged()
         })
 
         (viewModel as BrowserModel).getDescriptionUpdate().observe(viewLifecycleOwner, Observer { pair ->
@@ -142,7 +144,7 @@ class FileBrowserTvFragment : BaseBrowserTvFragment<MediaLibraryItem>(), PathAda
             ariane.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
             ariane.adapter = PathAdapter(this@FileBrowserTvFragment, this)
             if (ariane.itemDecorationCount == 0) {
-                val did = object : VLCDividerItemDecoration(requireContext(), HORIZONTAL, ContextCompat.getDrawable(requireContext(), R.drawable.ic_divider)!!) {
+                val did = object : VLCDividerItemDecoration(requireActivity(), HORIZONTAL, VectorDrawableCompat.create(requireActivity().resources, R.drawable.ic_divider, requireActivity().theme)!!) {
                     override fun getItemOffsets(outRect: Rect, view: View, parent: RecyclerView, state: RecyclerView.State) {
                         val position = parent.getChildAdapterPosition(view)
                         // hide the divider for the last child
@@ -153,7 +155,7 @@ class FileBrowserTvFragment : BaseBrowserTvFragment<MediaLibraryItem>(), PathAda
                         }
                     }
                 }
-                did.setDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.ic_divider)!!)
+                did.setDrawable(VectorDrawableCompat.create(requireActivity().resources, R.drawable.ic_divider, requireActivity().theme)!!)
                 ariane.addItemDecoration(did)
             }
             ariane.scrollToPosition(ariane.adapter!!.itemCount - 1)
@@ -196,11 +198,9 @@ class FileBrowserTvFragment : BaseBrowserTvFragment<MediaLibraryItem>(), PathAda
             animationDelegate.setVisibility(binding.favoriteButton, if (isRootLevel) View.GONE else View.VISIBLE)
             animationDelegate.setVisibility(binding.imageButtonFavorite, View.VISIBLE)
             animationDelegate.setVisibility(binding.favoriteDescription, View.VISIBLE)
-            favExists = withContext(Dispatchers.IO) {
-                (item as? MediaWrapper)?.let { browserFavRepository.browserFavExists(it.uri) } ?: false
-            }
-            binding.favoriteButton.setImageResource(if (favExists) R.drawable.ic_menu_fav_tv else R.drawable.ic_menu_not_fav_tv)
-            binding.imageButtonFavorite.setImageResource(if (favExists) R.drawable.ic_menu_fav_tv else R.drawable.ic_menu_not_fav_tv)
+            favExists = (item as? MediaWrapper)?.let { browserFavRepository.browserFavExists(it.uri) } ?: false
+            binding.favoriteButton.setImageResource(if (favExists) R.drawable.ic_bookmark else R.drawable.ic_bookmark_outline)
+            binding.imageButtonFavorite.setImageResource(if (favExists) R.drawable.ic_fabtvmini_bookmark else R.drawable.ic_fabtvmini_bookmark_outline)
         }
         if (!isRootLevel) binding.favoriteButton.setOnClickListener(favoriteClickListener)
         binding.imageButtonFavorite.setOnClickListener(favoriteClickListener)
@@ -251,17 +251,15 @@ class FileBrowserTvFragment : BaseBrowserTvFragment<MediaLibraryItem>(), PathAda
 
     private val favoriteClickListener: (View) -> Unit = {
         lifecycleScope.launch {
-            withContext(Dispatchers.IO) {
-                val mw = (item as MediaWrapper)
-                when {
-                    browserFavRepository.browserFavExists(mw.uri) -> browserFavRepository.deleteBrowserFav(mw.uri)
-                    mw.uri.scheme == "file" -> browserFavRepository.addLocalFavItem(mw.uri, mw.title, mw.artworkURL)
-                    else -> browserFavRepository.addNetworkFavItem(mw.uri, mw.title, mw.artworkURL)
-                }
-                favExists = !favExists
+            val mw = (item as MediaWrapper)
+            when {
+                browserFavRepository.browserFavExists(mw.uri) -> browserFavRepository.deleteBrowserFav(mw.uri)
+                mw.uri.scheme == "file" -> browserFavRepository.addLocalFavItem(mw.uri, mw.title, mw.artworkURL)
+                else -> browserFavRepository.addNetworkFavItem(mw.uri, mw.title, mw.artworkURL)
             }
-            if (!isRootLevel) binding.favoriteButton.setImageResource(if (favExists) R.drawable.ic_menu_fav_tv else R.drawable.ic_menu_not_fav_tv)
-            binding.imageButtonFavorite.setImageResource(if (favExists) R.drawable.ic_menu_fav_tv else R.drawable.ic_menu_not_fav_tv)
+            favExists = !favExists
+            if (!isRootLevel) binding.favoriteButton.setImageResource(if (favExists) R.drawable.ic_bookmark else R.drawable.ic_bookmark_outline)
+            binding.imageButtonFavorite.setImageResource(if (favExists) R.drawable.ic_fabtvmini_bookmark else R.drawable.ic_fabtvmini_bookmark_outline)
         }
     }
 
@@ -285,8 +283,8 @@ class FileBrowserTvFragment : BaseBrowserTvFragment<MediaLibraryItem>(), PathAda
         when(dialog) {
             is Dialog.LoginDialog -> goBack()
             is Dialog.ErrorMessage -> {
-               view?.let { Snackbar.make(it, "${dialog.title}: ${dialog.text}", Snackbar.LENGTH_LONG).show() }
-               goBack()
+                view?.let { Snackbar.make(it, "${dialog.title}: ${dialog.text}", Snackbar.LENGTH_LONG).show() }
+                goBack()
             }
         }
     }

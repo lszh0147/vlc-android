@@ -10,12 +10,14 @@ import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager
 import android.widget.*
 import androidx.appcompat.app.AppCompatDialog
 import androidx.fragment.app.DialogFragment
 import com.google.android.material.textfield.TextInputLayout
+import kotlinx.coroutines.launch
 import org.videolan.medialibrary.interfaces.media.MediaWrapper
-import org.videolan.tools.runIO
+import org.videolan.tools.AppScope
 import org.videolan.vlc.R
 import org.videolan.vlc.gui.DialogActivity
 import org.videolan.vlc.gui.MainActivity
@@ -43,7 +45,6 @@ class NetworkServerDialog : DialogFragment(), AdapterView.OnItemSelectedListener
     //Dummy hack because spinner callback is called right on registration
     var ignoreFirstSpinnerCb = false
 
-
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val activity = activity
         val dialog = AppCompatDialog(activity, theme)
@@ -51,6 +52,7 @@ class NetworkServerDialog : DialogFragment(), AdapterView.OnItemSelectedListener
 
         dialog.setCancelable(true)
         dialog.setCanceledOnTouchOutside(true)
+        dialog.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
         return dialog
     }
 
@@ -122,10 +124,11 @@ class NetworkServerDialog : DialogFragment(), AdapterView.OnItemSelectedListener
         else
             editServername.text.toString()
         val uri = Uri.parse(url.text.toString())
-        if (::networkUri.isInitialized) {
-            runIO(Runnable { browserFavRepository.deleteBrowserFav(networkUri) })
+        AppScope.launch {
+            if (::networkUri.isInitialized) browserFavRepository.deleteBrowserFav(networkUri)
+            browserFavRepository.addNetworkFavItem(uri, name, null)
+            dismiss()
         }
-        browserFavRepository.addNetworkFavItem(uri, name, null)
     }
 
     private fun updateUrl() {
@@ -165,7 +168,6 @@ class NetworkServerDialog : DialogFragment(), AdapterView.OnItemSelectedListener
         return 0
     }
 
-
     private fun getPortForProtocol(position: Int): String {
         return when (protocols[position]) {
             "FTP" -> FTP_DEFAULT_PORT
@@ -177,7 +179,7 @@ class NetworkServerDialog : DialogFragment(), AdapterView.OnItemSelectedListener
         }
     }
 
-    override fun onItemSelected(parent: AdapterView<*>, view: View, position: Int, id: Long) {
+    override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
         if (ignoreFirstSpinnerCb) {
             ignoreFirstSpinnerCb = false
             return
@@ -226,7 +228,6 @@ class NetworkServerDialog : DialogFragment(), AdapterView.OnItemSelectedListener
         when (v.id) {
             R.id.server_save -> {
                 saveServer()
-                dismiss()
             }
             R.id.server_cancel -> dismiss()
         }

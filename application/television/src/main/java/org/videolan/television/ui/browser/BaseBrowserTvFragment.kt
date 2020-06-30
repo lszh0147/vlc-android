@@ -42,6 +42,7 @@ import androidx.constraintlayout.widget.ConstraintSet
 import androidx.databinding.BindingAdapter
 import androidx.fragment.app.Fragment
 import androidx.leanback.app.BackgroundManager
+import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -52,10 +53,12 @@ import kotlinx.coroutines.yield
 import org.videolan.medialibrary.interfaces.Medialibrary
 import org.videolan.medialibrary.interfaces.media.MediaWrapper
 import org.videolan.medialibrary.media.MediaLibraryItem
+import org.videolan.resources.util.HeadersIndex
 import org.videolan.television.R
 import org.videolan.television.databinding.SongBrowserBinding
 import org.videolan.television.ui.*
 import org.videolan.tools.Settings
+import org.videolan.tools.putSingle
 import org.videolan.vlc.BuildConfig
 import org.videolan.vlc.gui.view.EmptyLoadingState
 import org.videolan.vlc.gui.view.RecyclerSectionItemGridDecoration
@@ -67,6 +70,7 @@ import org.videolan.vlc.viewmodels.SortableModel
 import org.videolan.vlc.viewmodels.browser.TYPE_FILE
 import org.videolan.vlc.viewmodels.browser.TYPE_NETWORK
 import org.videolan.vlc.viewmodels.tv.TvBrowserModel
+import java.util.ArrayList
 
 private const val TAG = "MediaBrowserTvFragment"
 
@@ -218,17 +222,29 @@ abstract class BaseBrowserTvFragment<T> : Fragment(), BrowserFragmentInterface, 
         binding.list.layoutManager = gridLayoutManager
     }
 
+
+    fun updateHeaders(it: HeadersIndex) {
+        val headerItems = ArrayList<String>()
+        it.run {
+            for (i in 0 until size()) {
+                headerItems.add(valueAt(i))
+            }
+        }
+        headerAdapter.items = headerItems
+        headerAdapter.notifyDataSetChanged()
+    }
+
     private fun changeDisplayMode() {
         inGrid = !inGrid
-        Settings.getInstance(requireActivity()).edit().putBoolean(getDisplayPrefId(), inGrid).apply()
+        Settings.getInstance(requireActivity()).putSingle(getDisplayPrefId(), inGrid)
         adapter.displaySwitch(inGrid)
         setupDisplayIcon()
         setupLayoutManager()
     }
 
     private fun setupDisplayIcon() {
-        binding.imageButtonDisplay.setImageResource(if (inGrid) R.drawable.ic_menu_list_tv_normal else R.drawable.ic_menu_grid_tv_normal)
-        binding.displayButton.setImageResource(if (inGrid) R.drawable.ic_menu_list_tv else R.drawable.ic_menu_grid_tv)
+        binding.imageButtonDisplay.setImageResource(if (inGrid) R.drawable.ic_fabtvmini_list else R.drawable.ic_fabtvmini_grid)
+        binding.displayButton.setImageResource(if (inGrid) R.drawable.ic_list else R.drawable.ic_grid)
         binding.displayDescription.setText(if (inGrid) R.string.display_in_list else R.string.display_in_grid)
     }
 

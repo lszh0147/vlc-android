@@ -50,8 +50,6 @@ import org.videolan.vlc.BuildConfig
 import org.videolan.vlc.R
 import org.videolan.vlc.databinding.DirectoryBrowserBinding
 import org.videolan.vlc.gui.AudioPlayerContainerActivity
-import org.videolan.vlc.gui.InfoActivity
-import org.videolan.vlc.gui.MainActivity
 import org.videolan.vlc.gui.dialogs.CtxActionReceiver
 import org.videolan.vlc.gui.dialogs.SavePlaylistDialog
 import org.videolan.vlc.gui.dialogs.showContext
@@ -59,6 +57,7 @@ import org.videolan.vlc.gui.helpers.MedialibraryUtils
 import org.videolan.vlc.gui.helpers.UiTools
 import org.videolan.vlc.gui.helpers.UiTools.addToPlaylist
 import org.videolan.vlc.gui.helpers.UiTools.addToPlaylistAsync
+import org.videolan.vlc.gui.helpers.UiTools.showMediaInfo
 import org.videolan.vlc.gui.helpers.hf.OTG_SCHEME
 import org.videolan.vlc.gui.view.EmptyLoadingState
 import org.videolan.vlc.gui.view.VLCDividerItemDecoration
@@ -82,15 +81,17 @@ private const val MSG_REFRESH = 3
 
 @ObsoleteCoroutinesApi
 @ExperimentalCoroutinesApi
-abstract class BaseBrowserFragment : MediaBrowserFragment<BrowserModel>(), IRefreshable, SwipeRefreshLayout.OnRefreshListener, View.OnClickListener, IEventsHandler<MediaLibraryItem>, CtxActionReceiver, PathAdapterListener {
+abstract class BaseBrowserFragment : MediaBrowserFragment<BrowserModel>(), IRefreshable, SwipeRefreshLayout.OnRefreshListener, View.OnClickListener, IEventsHandler<MediaLibraryItem>, CtxActionReceiver, PathAdapterListener, BrowserContainer<MediaLibraryItem> {
 
     private lateinit var addPlaylistFolderOnly: MenuItem
     protected val handler = BrowserFragmentHandler(this)
     private lateinit var layoutManager: LinearLayoutManager
-    var mrl: String? = null
+    override var mrl: String? = null
     protected var currentMedia: MediaWrapper? = null
     private var savedPosition = -1
-    var isRootDirectory: Boolean = false
+    override var isRootDirectory: Boolean = false
+    override val scannedDirectory = false
+    override val inCards = false
     protected var showHiddenFiles: Boolean = false
     protected lateinit var adapter: BaseBrowserAdapter
     protected abstract val categoryTitle: String
@@ -123,6 +124,7 @@ abstract class BaseBrowserFragment : MediaBrowserFragment<BrowserModel>(), IRefr
         super.onPrepareOptionsMenu(menu)
         menu.findItem(R.id.ml_menu_filter)?.isVisible = enableSearchOption()
         menu.findItem(R.id.ml_menu_sortby)?.isVisible = !isRootDirectory
+        menu.findItem(R.id.ml_menu_sortby_media_number)?.isVisible = false
         menu.findItem(R.id.ml_menu_add_playlist)?.isVisible = !isRootDirectory
         addPlaylistFolderOnly = menu.findItem(R.id.folder_add_playlist)
         addPlaylistFolderOnly.isVisible = adapter.mediaCount > 0
@@ -154,8 +156,9 @@ abstract class BaseBrowserFragment : MediaBrowserFragment<BrowserModel>(), IRefr
             if (::addPlaylistFolderOnly.isInitialized) addPlaylistFolderOnly.isVisible = adapter.mediaCount > 0
         })
         viewModel.getDescriptionUpdate().observe(viewLifecycleOwner, Observer { pair -> if (pair != null) adapter.notifyItemChanged(pair.first, pair.second) })
-        viewModel.loading.observe(viewLifecycleOwner, Observer {
-            (activity as? MainActivity)?.refreshing = it
+        viewModel.loading.observe(viewLifecycleOwner, Observer { loading ->
+            swipeRefreshLayout.isRefreshing = loading
+            updateEmptyView()
         })
     }
 
@@ -283,17 +286,19 @@ abstract class BaseBrowserFragment : MediaBrowserFragment<BrowserModel>(), IRefr
      */
     protected open fun updateEmptyView() {
         swipeRefreshLayout.let {
-            if (viewModel.isEmpty()) {
-                if (it.isRefreshing) {
+            when {
+                it.isRefreshing -> {
                     binding.emptyLoading.state = EmptyLoadingState.LOADING
                     binding.networkList.visibility = View.GONE
-                } else {
+                }
+                viewModel.isEmpty() -> {
                     binding.emptyLoading.state = EmptyLoadingState.EMPTY
                     binding.networkList.visibility = View.GONE
                 }
-            } else {
-                binding.emptyLoading.state = EmptyLoadingState.NONE
-                binding.networkList.visibility = View.VISIBLE
+                else -> {
+                    binding.emptyLoading.state = EmptyLoadingState.NONE
+                    binding.networkList.visibility = View.VISIBLE
+                }
             }
         }
     }
@@ -334,19 +339,13 @@ abstract class BaseBrowserFragment : MediaBrowserFragment<BrowserModel>(), IRefr
         val cancel = Runnable { viewModel.refresh() }
         val deleteAction = Runnable {
             lifecycleScope.launch {
-                deleteMedia(mw, false, cancel)
+                MediaUtils.deleteMedia(mw, cancel)
                 viewModel.remove(mw)
             }
         }
         val resId = if (mw.type == MediaWrapper.TYPE_DIR) R.string.confirm_delete_folder else R.string.confirm_delete
         UiTools.snackerConfirm(view, getString(resId, mw.title), Runnable { if (Permissions.checkWritePermission(requireActivity(), mw, deleteAction)) deleteAction.run() })
         return true
-    }
-
-    private fun showMediaInfo(mw: MediaWrapper) {
-        val i = Intent(activity, InfoActivity::class.java)
-        i.putExtra(TAG_ITEM, mw)
-        startActivity(i)
     }
 
     private fun playAll(mw: MediaWrapper?) {
@@ -395,7 +394,7 @@ abstract class BaseBrowserFragment : MediaBrowserFragment<BrowserModel>(), IRefr
                 R.id.action_mode_file_play -> MediaUtils.openList(activity, list, 0)
                 R.id.action_mode_file_append -> MediaUtils.appendMedia(activity, list)
                 R.id.action_mode_file_add_playlist -> requireActivity().addToPlaylist(list)
-                R.id.action_mode_file_info -> showMediaInfo(list[0])
+                R.id.action_mode_file_info -> requireActivity().showMediaInfo(list[0])
                 R.id.action_mode_file_delete -> removeItems(list)
                 else -> {
                     stopActionMode()
@@ -421,13 +420,13 @@ abstract class BaseBrowserFragment : MediaBrowserFragment<BrowserModel>(), IRefr
             }
             R.id.browser_show_all_files -> {
                 item.isChecked = !Settings.getInstance(requireActivity()).getBoolean("browser_show_all_files", true)
-                Settings.getInstance(requireActivity()).edit().putBoolean("browser_show_all_files", item.isChecked).apply()
+                Settings.getInstance(requireActivity()).putSingle("browser_show_all_files", item.isChecked)
                 viewModel.updateShowAllFiles(item.isChecked)
                 true
             }
             R.id.browser_show_hidden_files -> {
                 item.isChecked = !Settings.getInstance(requireActivity()).getBoolean("browser_show_hidden_files", true)
-                Settings.getInstance(requireActivity()).edit().putBoolean("browser_show_hidden_files", item.isChecked).apply()
+                Settings.getInstance(requireActivity()).putSingle("browser_show_hidden_files", item.isChecked)
                 viewModel.updateShowHiddenFiles(item.isChecked)
                 true
             }
@@ -457,12 +456,10 @@ abstract class BaseBrowserFragment : MediaBrowserFragment<BrowserModel>(), IRefr
 
     private fun toggleFavorite() = lifecycleScope.launch {
         val mw = currentMedia ?: return@launch
-        withContext(Dispatchers.IO) {
-            when {
-                browserFavRepository.browserFavExists(mw.uri) -> browserFavRepository.deleteBrowserFav(mw.uri)
-                mw.uri.scheme == "file" -> browserFavRepository.addLocalFavItem(mw.uri, mw.title, mw.artworkURL)
-                else -> browserFavRepository.addNetworkFavItem(mw.uri, mw.title, mw.artworkURL)
-            }
+        when {
+            browserFavRepository.browserFavExists(mw.uri) -> browserFavRepository.deleteBrowserFav(mw.uri)
+            mw.uri.scheme == "file" -> browserFavRepository.addLocalFavItem(mw.uri, mw.title, mw.artworkURL)
+            else -> browserFavRepository.addNetworkFavItem(mw.uri, mw.title, mw.artworkURL)
         }
         activity?.invalidateOptionsMenu()
     }
@@ -507,7 +504,7 @@ abstract class BaseBrowserFragment : MediaBrowserFragment<BrowserModel>(), IRefr
                 val isFileBrowser = this@BaseBrowserFragment is FileBrowserFragment && item.uri.scheme == "file"
                 val isNetworkBrowser = this@BaseBrowserFragment is NetworkBrowserFragment
                 if (isFileBrowser || isNetworkBrowser) {
-                    val favExists = withContext(Dispatchers.IO) { browserFavRepository.browserFavExists(mw.uri) }
+                    val favExists = browserFavRepository.browserFavExists(mw.uri)
                     flags = if (favExists) {
                         if (isNetworkBrowser) flags or CTX_FAV_EDIT or CTX_FAV_REMOVE
                         else flags or CTX_FAV_REMOVE
@@ -528,11 +525,11 @@ abstract class BaseBrowserFragment : MediaBrowserFragment<BrowserModel>(), IRefr
                 if (!isAudio) flags = flags or CTX_PLAY_AS_AUDIO
                 if (isVideo) flags = flags or CTX_DOWNLOAD_SUBTITLES
             }
-            if (flags != 0) showContext(requireActivity(), this@BaseBrowserFragment, position, item.getTitle(), flags)
+            if (flags != 0L) showContext(requireActivity(), this@BaseBrowserFragment, position, item.getTitle(), flags)
         }
     }
 
-    override fun onCtxAction(position: Int, option: Int) {
+    override fun onCtxAction(position: Int, option: Long) {
         val mw = adapter.getItem(position) as? MediaWrapper
                 ?: return
         when (option) {
@@ -543,7 +540,7 @@ abstract class BaseBrowserFragment : MediaBrowserFragment<BrowserModel>(), IRefr
             }
             CTX_APPEND -> MediaUtils.appendMedia(activity, mw)
             CTX_DELETE -> removeItem(mw)
-            CTX_INFORMATION -> showMediaInfo(mw)
+            CTX_INFORMATION -> requireActivity().showMediaInfo(mw)
             CTX_PLAY_AS_AUDIO -> {
                 mw.addFlags(MediaWrapper.MEDIA_FORCE_AUDIO)
                 MediaUtils.openMedia(activity, mw)
@@ -579,6 +576,7 @@ abstract class BaseBrowserFragment : MediaBrowserFragment<BrowserModel>(), IRefr
     override fun onMainActionClick(v: View, position: Int, item: MediaLibraryItem) {}
 
     override fun onUpdateFinished(adapter: RecyclerView.Adapter<*>) {
+        if (!isStarted()) return
         restoreMultiSelectHelper()
         swipeRefreshLayout.isRefreshing = false
         handler.sendEmptyMessage(MSG_HIDE_LOADING)

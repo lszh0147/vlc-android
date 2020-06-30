@@ -19,6 +19,7 @@ import org.videolan.resources.VLCOptions
 import org.videolan.tools.KEY_PLAYBACK_RATE
 import org.videolan.tools.KEY_PLAYBACK_SPEED_PERSIST
 import org.videolan.tools.Settings
+import org.videolan.tools.putSingle
 import org.videolan.vlc.BuildConfig
 import org.videolan.vlc.PlaybackService
 import org.videolan.vlc.repository.SlaveRepository
@@ -209,7 +210,7 @@ class PlayerController(val context: Context) : IVLCVout.Callback, MediaPlayer.Ev
     }
 
     private fun newMediaPlayer() : MediaPlayer {
-        return MediaPlayer(VLCInstance.get(context)).apply {
+        return MediaPlayer(VLCInstance.getInstance(context)).apply {
             setAudioDigitalOutputEnabled(VLCOptions.isAudioDigitalOutputEnabled(settings))
             VLCOptions.getAout(settings)?.let { setAudioOutput(it) }
             setRenderer(PlaybackService.renderer.value)
@@ -231,7 +232,7 @@ class PlayerController(val context: Context) : IVLCVout.Callback, MediaPlayer.Ev
         if (mediaplayer.isReleased) return
         mediaplayer.rate = rate
         if (save && settings.getBoolean(KEY_PLAYBACK_SPEED_PERSIST, false))
-            settings.edit().putFloat(KEY_PLAYBACK_RATE, rate).apply()
+            settings.putSingle(KEY_PLAYBACK_RATE, rate)
     }
 
     /**
@@ -244,6 +245,17 @@ class PlayerController(val context: Context) : IVLCVout.Callback, MediaPlayer.Ev
         if (id == IMedia.Meta.Publisher) return false
         mw?.updateMeta(mediaplayer)
         return id != IMedia.Meta.NowPlaying || mw?.nowPlaying !== null
+    }
+
+    /**
+     * When changing current media, setPreviousStats is called to store statistics related to the
+     * media. SetCurrentStats is called in the case where repeating is set to
+     * PlaybackStateCompat.REPEAT_MODE_ONE, and the current media should not be released, as
+     * it is still in use.
+     */
+    fun setCurrentStats() {
+        val media = mediaplayer.media ?: return
+        previousMediaStats = media.stats
     }
 
     fun setPreviousStats() {

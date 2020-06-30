@@ -20,6 +20,7 @@
 
 package org.videolan.vlc.gui.video
 
+import android.animation.Animator
 import android.annotation.SuppressLint
 import android.annotation.TargetApi
 import android.app.Activity
@@ -43,11 +44,9 @@ import android.util.Rational
 import android.view.*
 import android.view.View.OnClickListener
 import android.view.View.OnLongClickListener
-import android.view.ViewGroup.LayoutParams
 import android.view.animation.*
 import android.widget.*
 import android.widget.SeekBar.OnSeekBarChangeListener
-import androidx.annotation.StringRes
 import androidx.annotation.WorkerThread
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -57,6 +56,7 @@ import androidx.appcompat.widget.ViewStubCompat
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.constraintlayout.widget.Guideline
+import androidx.core.content.ContextCompat
 import androidx.databinding.BindingAdapter
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.DialogFragment
@@ -70,6 +70,9 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.vectordrawable.graphics.drawable.AnimatedVectorDrawableCompat
 import com.google.android.material.textfield.TextInputLayout
+import kotlinx.android.synthetic.main.player.*
+import kotlinx.android.synthetic.main.player_overlay_brightness.*
+import kotlinx.android.synthetic.main.player_overlay_volume.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -95,7 +98,10 @@ import org.videolan.vlc.gui.audio.PlaylistAdapter
 import org.videolan.vlc.gui.browser.EXTRA_MRL
 import org.videolan.vlc.gui.browser.FilePickerActivity
 import org.videolan.vlc.gui.dialogs.RenderersDialog
-import org.videolan.vlc.gui.helpers.*
+import org.videolan.vlc.gui.helpers.OnRepeatListener
+import org.videolan.vlc.gui.helpers.PlayerOptionsDelegate
+import org.videolan.vlc.gui.helpers.SwipeDragItemTouchHelperCallback
+import org.videolan.vlc.gui.helpers.UiTools
 import org.videolan.vlc.gui.helpers.hf.StoragePermissionsDelegate
 import org.videolan.vlc.interfaces.IPlaybackSettingsController
 import org.videolan.vlc.media.MediaUtils
@@ -142,19 +148,14 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
     private var isShowingDialog: Boolean = false
     var info: TextView? = null
     var overlayInfo: View? = null
-    var verticalBar: View? = null
-    private lateinit var verticalBarProgress: View
-    private lateinit var verticalBarBoostProgress: View
     internal var isLoading: Boolean = false
         private set
     private var isPlaying = false
     private var loadingImageView: ImageView? = null
     private var navMenu: ImageView? = null
-    private var rendererBtn: ImageView? = null
     protected var enableCloneMode: Boolean = false
-    private var screenOrientation: Int = 0
-    private var screenOrientationLock: Int = 0
-    private var currentScreenOrientation: Int = 0
+    private lateinit var orientationMode: PlayerOrientationMode
+    private var orientationLockedBeforeLock: Boolean = false
 
     private var currentAudioTrack = -2
     private var currentSpuTrack = -2
@@ -192,6 +193,7 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
     lateinit var touchDelegate: VideoTouchDelegate
     private val statsDelegate: VideoStatsDelegate by lazy(LazyThreadSafetyMode.NONE) { VideoStatsDelegate(this, { showOverlayTimeout(OVERLAY_INFINITE) }, { showOverlay(true) }) }
     val delayDelegate: VideoDelayDelegate by lazy(LazyThreadSafetyMode.NONE) { VideoDelayDelegate(this@VideoPlayerActivity) }
+    private val overlayDelegate: VideoPlayerOverlayDelegate by lazy(LazyThreadSafetyMode.NONE) { VideoPlayerOverlayDelegate(this@VideoPlayerActivity) }
     private var isTv: Boolean = false
 
     // Tracks & Subtitles
@@ -238,6 +240,8 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
     private lateinit var playToPause: AnimatedVectorDrawableCompat
     private lateinit var pauseToPlay: AnimatedVectorDrawableCompat
 
+    private lateinit var vibrator: Vibrator
+
     internal val isPlaybackSettingActive: Boolean
         get() = delayDelegate.playbackSetting != IPlaybackSettingsController.DelayState.OFF
 
@@ -249,7 +253,9 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
             service?.run {
                 when (msg.what) {
                     FADE_OUT -> hideOverlay(false)
-                    FADE_OUT_INFO -> fadeOutInfo()
+                    FADE_OUT_INFO -> fadeOutInfo(overlayInfo)
+                    FADE_OUT_BRIGHTNESS_INFO -> fadeOutInfo(player_overlay_brightness)
+                    FADE_OUT_VOLUME_INFO -> fadeOutInfo(player_overlay_volume)
                     START_PLAYBACK -> startPlayback()
                     AUDIO_SERVICE_CONNECTION_FAILED -> exit(RESULT_CONNECTION_FAILED)
                     RESET_BACK_LOCK -> lockBackButton = true
@@ -342,7 +348,7 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
     private var seekButtons: Boolean = false
     private var hasPlaylist: Boolean = false
 
-    private var enableSubs = true
+    var enableSubs = true
 
     private val downloadedSubtitleObserver = Observer<List<org.videolan.vlc.mediadb.models.ExternalSub>> { externalSubs ->
         for (externalSub in externalSubs) {
@@ -429,8 +435,13 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
 
 
 
-        screenOrientation = Integer.valueOf(
-                settings.getString(SCREEN_ORIENTATION, "99" /*SCREEN ORIENTATION SENSOR*/)!!)
+        val screenOrientationSetting = Integer.valueOf(settings.getString(SCREEN_ORIENTATION, "99" /*SCREEN ORIENTATION SENSOR*/)!!)
+        orientationMode = when (screenOrientationSetting) {
+            99 -> PlayerOrientationMode(false)
+            101 -> PlayerOrientationMode(true, ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+            102 -> PlayerOrientationMode(true, ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+            else -> PlayerOrientationMode(true, getOrientationForLock())
+        }
 
         videoLayout = findViewById(R.id.video_layout)
 
@@ -445,19 +456,17 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
         sDisplayRemainingTime = settings.getBoolean(KEY_REMAINING_TIME_DISPLAY, false)
         // Clear the resume time, since it is only used for resumes in external
         // videos.
-        val editor = settings.edit()
-        editor.putLong(VIDEO_RESUME_TIME, -1)
+        settings.putSingle(VIDEO_RESUME_TIME, -1L)
         // Paused flag - per session too, like the subs list.
-        editor.apply()
-
         this.volumeControlStream = AudioManager.STREAM_MUSIC
 
         // 100 is the value for screen_orientation_start_lock
         try {
-            requestedOrientation = getScreenOrientation(screenOrientation)
+            requestedOrientation = getScreenOrientation(orientationMode)
         } catch (ignored: IllegalStateException) {
             Log.w(TAG, "onCreate: failed to set orientation")
         }
+        updateOrientationIcon()
 
         // Extra initialization when no secondary display is detected
         isTv = Settings.showTvUi
@@ -480,12 +489,11 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
                     + (if (brightnessTouch) TOUCH_FLAG_BRIGHTNESS else 0)
                     + if (settings.getBoolean(ENABLE_DOUBLE_TAP_SEEK, true)) TOUCH_FLAG_SEEK else 0)
         } else 0
-        currentScreenOrientation = resources.configuration.orientation
         val dm = DisplayMetrics()
         windowManager.defaultDisplay.getMetrics(dm)
-        val yRange = Math.min(dm.widthPixels, dm.heightPixels)
-        val xRange = Math.max(dm.widthPixels, dm.heightPixels)
-        val sc = ScreenConfig(dm, xRange, yRange, currentScreenOrientation)
+        val yRange = dm.widthPixels.coerceAtMost(dm.heightPixels)
+        val xRange = dm.widthPixels.coerceAtLeast(dm.heightPixels)
+        val sc = ScreenConfig(dm, xRange, yRange, orientationMode.orientation)
         touchDelegate = VideoTouchDelegate(this, touch, sc, isTv)
         UiTools.setRotationAnimation(this)
         if (savedInstanceState != null) {
@@ -498,8 +506,9 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
             }
         }
 
-        playToPause = AnimatedVectorDrawableCompat.create(this, R.drawable.anim_play_pause)!!
-        pauseToPlay = AnimatedVectorDrawableCompat.create(this, R.drawable.anim_pause_play)!!
+        playToPause = AnimatedVectorDrawableCompat.create(this, R.drawable.anim_play_pause_video)!!
+        pauseToPlay = AnimatedVectorDrawableCompat.create(this, R.drawable.anim_pause_play_video)!!
+        vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
     }
 
     override fun afterTextChanged(s: Editable?) {
@@ -540,22 +549,24 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
          */
         setListeners(true)
 
-        if (isLocked && screenOrientation == 99) requestedOrientation = screenOrientationLock
+        if (isLocked && !orientationMode.locked) requestedOrientation = orientationMode.orientation
+        updateOrientationIcon()
     }
 
     private fun setListeners(enabled: Boolean) {
         navMenu?.setOnClickListener(if (enabled) this else null)
         if (::hudBinding.isInitialized) {
             hudBinding.playerOverlaySeekbar.setOnSeekBarChangeListener(if (enabled) seekListener else null)
+            hudBinding.abRepeatReset.setOnClickListener(this)
+            hudBinding.abRepeatStop.setOnClickListener(this)
+            abRepeatAddMarker.setOnClickListener(this)
             hudBinding.orientationToggle.setOnClickListener(if (enabled) this else null)
             hudBinding.orientationToggle.setOnLongClickListener(if (enabled) this else null)
-            abRepeatAddMarker.setOnClickListener(this)
+            hudBinding.swipeToUnlock.setOnStartTouchingListener { showOverlayTimeout(OVERLAY_INFINITE) }
+            hudBinding.swipeToUnlock.setOnStopTouchingListener { showOverlayTimeout(OVERLAY_TIMEOUT) }
+            hudBinding.swipeToUnlock.setOnUnlockListener { toggleLock() }
         }
-        if (::hudRightBinding.isInitialized) {
-            hudRightBinding.abRepeatReset.setOnClickListener(this)
-            hudRightBinding.abRepeatStop.setOnClickListener(this)
-        }
-        UiTools.setViewOnClickListener(rendererBtn, if (enabled) this else null)
+        if (::hudRightBinding.isInitialized) UiTools.setViewOnClickListener(hudRightBinding.videoRenderer, if (enabled) this else null)
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -601,7 +612,7 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
 
         if (!isInPictureInPictureMode
                 && (finishing || (AndroidUtil.isNougatOrLater && !AndroidUtil.isOOrLater //Video on background on Nougat Android TVs
-                                  && AndroidDevices.isAndroidTv && !requestVisibleBehind(true))))
+                        && AndroidDevices.isAndroidTv && !requestVisibleBehind(true))))
             stopPlayback()
     }
 
@@ -662,20 +673,21 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        currentScreenOrientation = newConfig.orientation
 
         if (touchDelegate != null) {
             val dm = DisplayMetrics()
             windowManager.defaultDisplay.getMetrics(dm)
             val sc = ScreenConfig(dm,
-                    Math.max(dm.widthPixels, dm.heightPixels),
-                    Math.min(dm.widthPixels, dm.heightPixels),
-                    currentScreenOrientation)
+                    dm.widthPixels.coerceAtLeast(dm.heightPixels),
+                    dm.widthPixels.coerceAtMost(dm.heightPixels),
+                    orientationMode.orientation)
             touchDelegate.screenConfig = sc
         }
         resetHudLayout()
         showControls(isShowing)
         statsDelegate.onConfigurationChanged()
+        updateHudMargins()
+        updateTitleConstraints()
     }
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
@@ -683,7 +695,6 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
         if (!::hudBinding.isInitialized) return
         if (!isTv && !AndroidDevices.isChromeBook) {
             hudBinding.orientationToggle.setVisible()
-            hudBinding.lockOverlayButton.setVisible()
         }
     }
 
@@ -720,10 +731,7 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
         cleanUI()
         stopPlayback()
 
-        val editor = settings.edit()
-        if (savedTime != -1L) editor.putLong(VIDEO_RESUME_TIME, savedTime)
-
-        editor.apply()
+        if (savedTime != -1L) settings.putSingle(VIDEO_RESUME_TIME, savedTime)
 
         saveBrightness()
 
@@ -743,11 +751,7 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
         // Save brightness if user wants to
         if (settings.getBoolean(SAVE_BRIGHTNESS, false)) {
             val brightness = window.attributes.screenBrightness
-            if (brightness != -1f) {
-                val editor = settings.edit()
-                editor.putFloat(BRIGHTNESS_VALUE, brightness)
-                editor.apply()
-            }
+            if (brightness != -1f) settings.putSingle(BRIGHTNESS_VALUE, brightness)
         }
     }
 
@@ -851,11 +855,11 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
             val tv = Settings.showTvUi
             val interactive = isInteractive
             wasPaused = !isPlaying || (!tv && !interactive)
-            if (wasPaused) settings.edit().putBoolean(VIDEO_PAUSED, true).apply()
+            if (wasPaused) settings.putSingle(VIDEO_PAUSED, true)
             if (!isFinishing) {
                 currentAudioTrack = audioTrack
                 currentSpuTrack = spuTrack
-                if (tv && !isInteractive) finish() // Leave player on TV, restauration can be difficult
+                if (tv) finish() // Leave player on TV, restauration can be difficult
             }
 
             if (isMute) mute(false)
@@ -868,6 +872,7 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
                 if (switchToPopup)
                     switchToPopup(currentMediaPosition)
                 else {
+                    mediaplayer.detachViews()
                     currentMediaWrapper?.addFlags(MediaWrapper.MEDIA_FORCE_AUDIO)
                     showWithoutParse(currentMediaPosition)
                 }
@@ -894,7 +899,7 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
         /* Stop listening for changes to media routes. */
         if (!isBenchmark) displayManager.removeMediaRouterCallback()
 
-        if (!displayManager.isSecondary) service?.mediaplayer?.detachViews()
+         if (!displayManager.isSecondary) service?.mediaplayer?.detachViews()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -965,7 +970,7 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
             return super.onKeyDown(keyCode, event)
         if (isOptionsListShowing) return false
         if (isPlaybackSettingActive && keyCode != KeyEvent.KEYCODE_J && keyCode != KeyEvent.KEYCODE_K
-                        && keyCode != KeyEvent.KEYCODE_G && keyCode != KeyEvent.KEYCODE_H) return false
+                && keyCode != KeyEvent.KEYCODE_G && keyCode != KeyEvent.KEYCODE_H) return false
         if (isLoading) {
             when (keyCode) {
                 KeyEvent.KEYCODE_S, KeyEvent.KEYCODE_MEDIA_STOP -> {
@@ -1045,6 +1050,9 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
             KeyEvent.KEYCODE_DPAD_LEFT -> {
                 if (isNavMenu)
                     return navigateDvdMenu(keyCode)
+                else if (isLocked) {
+                    showOverlayTimeout(OVERLAY_TIMEOUT)
+                }
                 else if (!isShowing && !playlistContainer.isVisible()) {
                     if (event.isAltPressed && event.isCtrlPressed) {
                         touchDelegate.seekDelta(-300000)
@@ -1060,6 +1068,9 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
             KeyEvent.KEYCODE_DPAD_RIGHT -> {
                 if (isNavMenu)
                     return navigateDvdMenu(keyCode)
+                else if (isLocked) {
+                    showOverlayTimeout(OVERLAY_TIMEOUT)
+                }
                 else if (!isShowing && !playlistContainer.isVisible()) {
                     if (event.isAltPressed && event.isCtrlPressed) {
                         touchDelegate.seekDelta(300000)
@@ -1075,6 +1086,9 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
             KeyEvent.KEYCODE_DPAD_UP -> {
                 if (isNavMenu)
                     return navigateDvdMenu(keyCode)
+                else if (isLocked) {
+                    showOverlayTimeout(OVERLAY_TIMEOUT)
+                }
                 else if (event.isCtrlPressed) {
                     volumeUp()
                     return true
@@ -1089,6 +1103,9 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
             KeyEvent.KEYCODE_DPAD_DOWN -> {
                 if (isNavMenu)
                     return navigateDvdMenu(keyCode)
+                else if (isLocked) {
+                    showOverlayTimeout(OVERLAY_TIMEOUT)
+                }
                 else if (event.isCtrlPressed) {
                     volumeDown()
                     return true
@@ -1100,6 +1117,9 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
             KeyEvent.KEYCODE_DPAD_CENTER -> {
                 if (isNavMenu)
                     return navigateDvdMenu(keyCode)
+                else if (isLocked) {
+                    showOverlayTimeout(OVERLAY_TIMEOUT)
+                }
                 else if (!isShowing) {
                     doPlayPause()
                     return true
@@ -1243,24 +1263,18 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
     }
 
     /**
-     * Lock screen rotation
+     * Lock player
      */
     private fun lockScreen() {
-        if (screenOrientation != 100) {
-            screenOrientationLock = requestedOrientation
-            requestedOrientation = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2)
-                ActivityInfo.SCREEN_ORIENTATION_LOCKED
-            else
-                getScreenOrientation(100)
-        }
-        showInfo(R.string.locked, 1000)
+        orientationLockedBeforeLock = orientationMode.locked
+        if (!orientationMode.locked) toggleOrientation()
         if (::hudBinding.isInitialized) {
-            hudBinding.lockOverlayButton.setImageResource(R.drawable.ic_locked_player)
             hudBinding.playerOverlayTime.isEnabled = false
             hudBinding.playerOverlaySeekbar.isEnabled = false
             hudBinding.playerOverlayLength.isEnabled = false
             hudBinding.playlistNext.isEnabled = false
             hudBinding.playlistPrevious.isEnabled = false
+            hudBinding.swipeToUnlock.setVisible()
         }
         hideOverlay(true)
         lockBackButton = true
@@ -1268,52 +1282,61 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
     }
 
     /**
-     * Remove screen lock
+     * Remove player lock
      */
     private fun unlockScreen() {
-        if (screenOrientation != 100)
-            requestedOrientation = screenOrientationLock
-        showInfo(R.string.unlocked, 1000)
+        orientationMode.locked = orientationLockedBeforeLock
+        requestedOrientation = getScreenOrientation(orientationMode)
         if (::hudBinding.isInitialized) {
-            hudBinding.lockOverlayButton.setImageResource(R.drawable.ic_lock_player)
             hudBinding.playerOverlayTime.isEnabled = true
             hudBinding.playerOverlaySeekbar.isEnabled = service?.isSeekable != false
             hudBinding.playerOverlayLength.isEnabled = true
             hudBinding.playlistNext.isEnabled = true
             hudBinding.playlistPrevious.isEnabled = true
         }
+        updateOrientationIcon()
         isShowing = false
         isLocked = false
         showOverlay()
         lockBackButton = false
     }
 
+
+    private fun hapticFeedback() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)  vibrator.vibrate(VibrationEffect.createOneShot(50, 80))
+        else vibrator.vibrate(50)
+    }
+
     /**
-     * Show text in the info view and vertical progress bar for "duration" milliseconds
-     * @param text
-     * @param duration
-     * @param barNewValue new volume/brightness value (range: 0 - 15)
+     * Show the brightness value with  bar
+     * @param brightness the brightness value
      */
-    private fun showInfoWithVerticalBar(text: String, duration: Int, barNewValue: Int, max: Int) {
-        showInfo(text, duration)
-        if (!::verticalBarProgress.isInitialized) return
-        var layoutParams: LinearLayout.LayoutParams
-        if (barNewValue <= 100) {
-            layoutParams = verticalBarProgress.layoutParams as LinearLayout.LayoutParams
-            layoutParams.weight = barNewValue * 100 / max.toFloat()
-            verticalBarProgress.layoutParams = layoutParams
-            layoutParams = verticalBarBoostProgress.layoutParams as LinearLayout.LayoutParams
-            layoutParams.weight = 0f
-            verticalBarBoostProgress.layoutParams = layoutParams
-        } else {
-            layoutParams = verticalBarProgress.layoutParams as LinearLayout.LayoutParams
-            layoutParams.weight = 100 * 100 / max.toFloat()
-            verticalBarProgress.layoutParams = layoutParams
-            layoutParams = verticalBarBoostProgress.layoutParams as LinearLayout.LayoutParams
-            layoutParams.weight = (barNewValue - 100) * 100 / max.toFloat()
-            verticalBarBoostProgress.layoutParams = layoutParams
-        }
-        verticalBar.setVisible()
+    private fun showBrightnessBar(brightness: Int) {
+        findViewById<ViewStubCompat>(R.id.player_brightness_stub)?.setVisible()
+        if (player_overlay_brightness.visibility != View.VISIBLE) hapticFeedback()
+        player_overlay_brightness.setVisible()
+        brightness_value_text.text = "$brightness%"
+        playerBrightnessProgress.setValue(brightness)
+        player_overlay_brightness.setVisible()
+        handler.removeMessages(FADE_OUT_BRIGHTNESS_INFO)
+        handler.sendEmptyMessageDelayed(FADE_OUT_BRIGHTNESS_INFO, 1000L)
+        dimStatusBar(true)
+    }
+
+    /**
+     * Show the volume value with  bar
+     * @param volume the volume value
+     */
+    private fun showVolumeBar(volume: Int) {
+        findViewById<ViewStubCompat>(R.id.player_volume_stub)?.setVisible()
+        if (player_overlay_volume.visibility != View.VISIBLE)  hapticFeedback()
+        volume_value_text.text = "$volume%"
+        playerVolumeProgress.isDouble = isAudioBoostEnabled
+        playerVolumeProgress.setValue(volume)
+        player_overlay_volume.setVisible()
+        handler.removeMessages(FADE_OUT_VOLUME_INFO)
+        handler.sendEmptyMessageDelayed(FADE_OUT_VOLUME_INFO, 1000L)
+        dimStatusBar(true)
     }
 
     /**
@@ -1324,7 +1347,6 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
     internal fun showInfo(text: String, duration: Int) {
         if (isInPictureInPictureMode) return
         initInfoOverlay()
-        verticalBar.setGone()
         overlayInfo.setVisible()
         info.setVisible()
         info?.text = text
@@ -1339,9 +1361,6 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
             // the info textView is not on the overlay
             info = findViewById(R.id.player_overlay_textinfo)
             overlayInfo = findViewById(R.id.player_overlay_info)
-            verticalBar = findViewById(R.id.verticalbar)
-            verticalBarProgress = findViewById(R.id.verticalbar_progress)
-            verticalBarBoostProgress = findViewById(R.id.verticalbar_boost_progress)
         }
     }
 
@@ -1353,15 +1372,11 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
      * hide the info view with "delay" milliseconds delay
      * @param delay
      */
-    private fun hideInfo(delay: Int = 0) {
-        handler.sendEmptyMessageDelayed(FADE_OUT_INFO, delay.toLong())
-    }
-
-    private fun fadeOutInfo() {
-        if (overlayInfo?.visibility == View.VISIBLE) {
-            overlayInfo?.startAnimation(AnimationUtils.loadAnimation(
+        private fun fadeOutInfo(view:View?) {
+        if (view?.visibility == View.VISIBLE) {
+            view.startAnimation(AnimationUtils.loadAnimation(
                     this@VideoPlayerActivity, android.R.anim.fade_out))
-            overlayInfo.setInvisible()
+            view.setInvisible()
         }
     }
 
@@ -1570,7 +1585,10 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
     //Toast that appears only once
     fun displayWarningToast() {
         warningToast?.cancel()
-        warningToast = Toast.makeText(application, R.string.audio_boost_warning, Toast.LENGTH_SHORT).apply { show() }
+        warningToast = Toast.makeText(application, R.string.audio_boost_warning, Toast.LENGTH_SHORT).apply {
+            setGravity(Gravity.LEFT or Gravity.BOTTOM, 16.dp,0)
+            show()
+        }
     }
 
     internal fun setAudioVolume(vol: Int) {
@@ -1600,7 +1618,7 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
                 vol = Math.round(vol * 100 / audioMax.toFloat())
                 service.setVolume(Math.round(vol.toFloat()))
             }
-            showInfoWithVerticalBar(getString(R.string.volume) + "\n" + Integer.toString(vol) + '%'.toString(), 1000, vol, if (isAudioBoostEnabled) 200 else 100)
+            showVolumeBar(vol)
         }
     }
 
@@ -1623,7 +1641,7 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
         var brightness = (lp.screenBrightness + delta).coerceIn(0.01f, 1f)
         setWindowBrightness(brightness)
         brightness = (brightness * 100).roundToInt().toFloat()
-        showInfoWithVerticalBar("${getString(R.string.brightness)}\n${brightness.toInt()}%", 1000, brightness.toInt(), 100)
+        showBrightnessBar(brightness.toInt())
     }
 
     private fun setWindowBrightness(brightness: Float) {
@@ -1634,21 +1652,8 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
     }
 
     open fun onAudioSubClick(anchor: View?) {
-        service?.let { service ->
-            var flags = 0
-            if (enableSubs) {
-                flags = flags or CTX_DOWNLOAD_SUBTITLES_PLAYER
-                if (displayManager.isPrimary) flags = flags or CTX_PICK_SUBS
-            }
-            if (service.videoTracksCount > 2) flags = flags or CTX_VIDEO_TRACK
-            if (service.audioTracksCount > 0) flags = flags or CTX_AUDIO_TRACK
-            if (service.spuTracksCount > 0) flags = flags or CTX_SUBS_TRACK
-
-            if (optionsDelegate == null) optionsDelegate = PlayerOptionsDelegate(this, service)
-            optionsDelegate?.flags = flags
-            optionsDelegate?.show(PlayerOptionType.MEDIA_TRACKS)
-            hideOverlay(false)
-        }
+        overlayDelegate.showTracks()
+        hideOverlay(false)
     }
 
     override fun onPopupMenu(view: View, position: Int, item: MediaWrapper?) {
@@ -1692,17 +1697,13 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
     }
 
     override fun onLongClick(v: View): Boolean {
-        when (v.id) {
-            R.id.orientation_toggle -> return resetOrientation()
-        }
-
         return false
     }
 
     fun toggleTimeDisplay() {
         sDisplayRemainingTime = !sDisplayRemainingTime
         showOverlay()
-        settings.edit().putBoolean(KEY_REMAINING_TIME_DISPLAY, sDisplayRemainingTime).apply()
+        settings.putSingle(KEY_REMAINING_TIME_DISPLAY, sDisplayRemainingTime)
     }
 
     fun toggleLock() {
@@ -1710,6 +1711,7 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
             unlockScreen()
         else
             lockScreen()
+        updateRendererVisibility()
     }
 
     fun toggleLoop(v: View) = service?.run {
@@ -1848,14 +1850,14 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
         if (!::hudBinding.isInitialized) return
         hudBinding.playerOverlayRewind.isEnabled = seekable
         hudBinding.playerOverlayRewind.setImageResource(if (seekable)
-            R.drawable.ic_rewind_player
+            R.drawable.ic_player_rewind_10
         else
-            R.drawable.ic_rewind_player_disabled)
+            R.drawable.ic_player_rewind_10_disabled)
         hudBinding.playerOverlayForward.isEnabled = seekable
         hudBinding.playerOverlayForward.setImageResource(if (seekable)
-            R.drawable.ic_forward_player
+            R.drawable.ic_player_forward_10
         else
-            R.drawable.ic_forward_player_disabled)
+            R.drawable.ic_player_forward_10_disabled)
         if (!isLocked)
             hudBinding.playerOverlaySeekbar.isEnabled = seekable
     }
@@ -1904,6 +1906,7 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
         val next = (mediaplayer.videoScale.ordinal + 1) % MediaPlayer.SURFACE_SCALES_COUNT
         val scale = MediaPlayer.ScaleType.values()[next]
         setVideoScale(scale)
+        handler.sendEmptyMessage(SHOW_INFO)
     }
 
     internal fun setVideoScale(scale: MediaPlayer.ScaleType) = service?.run {
@@ -1916,9 +1919,7 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
             MediaPlayer.ScaleType.SURFACE_4_3 -> showInfo("4:3", 1000)
             MediaPlayer.ScaleType.SURFACE_ORIGINAL -> showInfo(R.string.surface_original, 1000)
         }
-        settings.edit()
-                .putInt(VIDEO_RATIO, scale.ordinal)
-                .apply()
+        settings.putSingle(VIDEO_RATIO, scale.ordinal)
     }
 
     /**
@@ -1953,8 +1954,10 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
                     showControls(true)
                 }
                 dimStatusBar(false)
-                hudBinding.progressOverlay.setVisible()
-                hudRightBinding.hudRightOverlay.setVisible()
+
+                enterAnimate(arrayOf(hudBinding.progressOverlay, hud_background), 100.dp.toFloat())
+                enterAnimate(arrayOf(hudRightBinding.hudRightOverlay, hud_right_background), -100.dp.toFloat())
+
                 if (!displayManager.isPrimary)
                     overlayBackground.setVisible()
                 updateOverlayPausePlay(true)
@@ -1973,17 +1976,18 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
                 hudBinding.playerOverlayRewind.visibility = if (show) View.VISIBLE else View.INVISIBLE
                 hudBinding.playerOverlayForward.visibility = if (show) View.VISIBLE else View.INVISIBLE
             }
-            hudBinding.orientationToggle.visibility = if (isTv || AndroidDevices.isChromeBook) View.GONE else if (show) View.VISIBLE else View.INVISIBLE
             hudBinding.playerOverlayTracks.visibility = if (show) View.VISIBLE else View.INVISIBLE
             hudBinding.playerOverlayAdvFunction.visibility = if (show) View.VISIBLE else View.INVISIBLE
+            hudBinding.playerResize.visibility = if (show) View.VISIBLE else View.INVISIBLE
             if (hasPlaylist) {
                 hudBinding.playlistPrevious.visibility = if (show) View.VISIBLE else View.INVISIBLE
                 hudBinding.playlistNext.visibility = if (show) View.VISIBLE else View.INVISIBLE
             }
+            hudBinding.orientationToggle.visibility = if (isTv || AndroidDevices.isChromeBook) View.INVISIBLE else if (show) View.VISIBLE else View.INVISIBLE
         }
         if (::hudRightBinding.isInitialized) {
             val secondary = displayManager.isSecondary
-            if (secondary) hudRightBinding.videoSecondaryDisplay.setImageResource(R.drawable.ic_screenshare_stop_circle_player)
+            if (secondary) hudRightBinding.videoSecondaryDisplay.setImageResource(R.drawable.ic_player_screenshare_stop)
             hudRightBinding.videoSecondaryDisplay.visibility = if (!show) View.GONE else if (UiTools.hasSecondaryDisplay(applicationContext)) View.VISIBLE else View.GONE
             hudRightBinding.videoSecondaryDisplay.contentDescription = resources.getString(if (secondary) R.string.video_remote_disable else R.string.video_remote_enable)
 
@@ -1999,7 +2003,7 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
                 it.setVisible()
                 hudRightBinding = DataBindingUtil.bind(findViewById(R.id.hud_right_overlay)) ?: return
                 if (!isBenchmark && enableCloneMode && !settings.contains("enable_clone_mode")) {
-                    UiTools.snackerConfirm(hudRightBinding.videoSecondaryDisplay, getString(R.string.video_save_clone_mode), Runnable { settings.edit().putBoolean("enable_clone_mode", true).apply() })
+                    UiTools.snackerConfirm(hudRightBinding.videoSecondaryDisplay, getString(R.string.video_save_clone_mode), Runnable { settings.putSingle("enable_clone_mode", true) })
                 }
             }
 
@@ -2016,7 +2020,8 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
                     hudBinding.abRepeatB = if (abvalues.stop == -1L) -1F else abvalues.stop / service.playlistManager.player.getLength().toFloat()
                     hudBinding.abRepeatMarkerA.visibility = if (abvalues.start == -1L) View.GONE else View.VISIBLE
                     hudBinding.abRepeatMarkerB.visibility = if (abvalues.stop == -1L) View.GONE else View.VISIBLE
-                    service.manageAbRepeatStep(hudRightBinding.abRepeatReset, hudRightBinding.abRepeatStop, hudBinding.abRepeatContainer, abRepeatAddMarker)
+                    service.manageAbRepeatStep(hudBinding.abRepeatReset, hudBinding.abRepeatStop, hudBinding.abRepeatContainer, abRepeatAddMarker)
+                    showOverlayTimeout(if (abvalues.start == -1L || abvalues.stop == -1L) OVERLAY_INFINITE else OVERLAY_TIMEOUT)
                 })
                 service.playlistManager.abRepeatOn.observe(this, Observer {
                     hudBinding.abRepeatMarkerGuidelineContainer.visibility = if (it) View.VISIBLE else View.GONE
@@ -2025,8 +2030,9 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
                         hudBinding.playerOverlayLength.nextFocusUpId = R.id.ab_repeat_add_marker
                         hudBinding.playerOverlayTime.nextFocusUpId = R.id.ab_repeat_add_marker
                     }
+                    if (it) showOverlayTimeout(OVERLAY_INFINITE)
 
-                    service.manageAbRepeatStep(hudRightBinding.abRepeatReset, hudRightBinding.abRepeatStop, hudBinding.abRepeatContainer, abRepeatAddMarker)
+                    service.manageAbRepeatStep(hudBinding.abRepeatReset, hudBinding.abRepeatStop, hudBinding.abRepeatContainer, abRepeatAddMarker)
                 })
                 service.playlistManager.delayValue.observe(this, Observer {
                     delayDelegate.delayChanged(it, service)
@@ -2040,34 +2046,22 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
                 hudBinding.statsClose.setOnClickListener { service.playlistManager.videoStatsOn.postValue(false) }
 
                 hudBinding.lifecycleOwner = this
-                val layoutParams = hudBinding.progressOverlay.layoutParams as RelativeLayout.LayoutParams
-                if (AndroidDevices.isPhone || !AndroidDevices.hasNavBar)
-                    layoutParams.width = LayoutParams.MATCH_PARENT
-                else
-                    layoutParams.addRule(RelativeLayout.CENTER_HORIZONTAL, RelativeLayout.TRUE)
-                hudBinding.progressOverlay.layoutParams = layoutParams
+                updateOrientationIcon()
                 overlayBackground = findViewById(R.id.player_overlay_background)
                 navMenu = findViewById(R.id.player_overlay_navmenu)
                 if (!AndroidDevices.isChromeBook && !isTv
                         && Settings.getInstance(this).getBoolean("enable_casting", true)) {
-                    rendererBtn = findViewById(R.id.video_renderer)
-                    PlaybackService.renderer.observe(this, Observer { rendererItem -> rendererBtn?.setImageDrawable(AppCompatResources.getDrawable(this, if (rendererItem == null) R.drawable.ic_renderer_circle_player else R.drawable.ic_renderer_on_circle_player)) })
-                    RendererDelegate.renderers.observe(this, Observer<List<RendererItem>> { rendererItems -> rendererBtn.setVisibility(if (rendererItems.isNullOrEmpty()) View.GONE else View.VISIBLE) })
+                    PlaybackService.renderer.observe(this, Observer { rendererItem -> hudRightBinding.videoRenderer.setImageDrawable(AppCompatResources.getDrawable(this, if (rendererItem == null) R.drawable.ic_player_renderer else R.drawable.ic_player_renderer_on)) })
+                    RendererDelegate.renderers.observe(this, Observer<List<RendererItem>> { rendererItems -> updateRendererVisibility() })
                 }
 
                 hudRightBinding.playerOverlayTitle.text = service.currentMediaWrapper?.title
+                manageTitleConstraints()
+                updateTitleConstraints()
+                updateHudMargins()
 
                 if (seekButtons) initSeekButton()
 
-                //Set margins for TV overscan
-                if (isTv) {
-                    val hm = resources.getDimensionPixelSize(R.dimen.tv_overscan_horizontal)
-                    val vm = resources.getDimensionPixelSize(R.dimen.tv_overscan_vertical)
-
-                    val lp = vsc.layoutParams as RelativeLayout.LayoutParams
-                    lp.setMargins(hm, 0, hm, vm)
-                    vsc.layoutParams = lp
-                }
 
                 resetHudLayout()
                 updateOverlayPausePlay(true)
@@ -2076,7 +2070,6 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
                 updateNavStatus()
                 setListeners(true)
                 initPlaylistUi()
-                if (!displayManager.isPrimary || isTv) hudBinding.lockOverlayButton.setGone()
             } else if (::hudBinding.isInitialized) {
                 hudBinding.progress = service.playlistManager.player.progress
                 hudBinding.lifecycleOwner = this
@@ -2084,20 +2077,91 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
         }
     }
 
+    private fun updateRendererVisibility() {
+        if (::hudRightBinding.isInitialized) hudRightBinding.videoRenderer.visibility = if (isLocked || RendererDelegate.renderers.value.isNullOrEmpty()) View.GONE else View.VISIBLE
+    }
+
+    private val titleConstraintSetLandscape = ConstraintSet()
+    private val titleConstraintSetPortrait = ConstraintSet()
+    private fun manageTitleConstraints() {
+       titleConstraintSetLandscape.clone(hudRightBinding.hudRightOverlay)
+       titleConstraintSetPortrait.clone(hudRightBinding.hudRightOverlay)
+        titleConstraintSetPortrait.setMargin(hudRightBinding.playerOverlayTitle.id, ConstraintSet.START, 16.dp)
+        titleConstraintSetPortrait.setMargin(hudRightBinding.playerOverlayTitle.id, ConstraintSet.END, 16.dp)
+        titleConstraintSetPortrait.connect(hudRightBinding.playerOverlayTitle.id, ConstraintSet.TOP, hudRightBinding.playerOverlayNavmenu.id, ConstraintSet.BOTTOM, 0.dp)
+    }
+
+    private fun updateTitleConstraints() {
+        if (::hudRightBinding.isInitialized) when (resources.configuration.orientation) {
+            Configuration.ORIENTATION_PORTRAIT -> titleConstraintSetPortrait
+            else -> titleConstraintSetLandscape
+        }.applyTo(hudRightBinding.hudRightOverlay)
+    }
+
+
+    private fun updateHudMargins() {
+        //here, we override the default Android overscan
+        val overscanHorizontal = if (isTv) 32.dp else 0
+        val overscanVertical = if (isTv) resources.getDimension(R.dimen.tv_overscan_vertical).toInt() else 0
+        if (::hudBinding.isInitialized) {
+            val largeMargin = resources.getDimension(R.dimen.large_margins_center)
+            val smallMargin = resources.getDimension(R.dimen.small_margins_sides)
+            applyMargin(hudBinding.playlistPrevious, largeMargin.toInt(), true)
+            applyMargin(hudBinding.playerOverlayRewind, largeMargin.toInt(), true)
+            applyMargin(hudBinding.playlistNext, largeMargin.toInt(), false)
+            applyMargin(hudBinding.playerOverlayForward, largeMargin.toInt(), false)
+
+            applyMargin(hudBinding.playerOverlayTracks, if (!isTv) smallMargin.toInt() else overscanHorizontal, false)
+            applyMargin(hudBinding.orientationToggle, smallMargin.toInt(), false)
+            applyMargin(hudBinding.playerResize, smallMargin.toInt(), true)
+            applyMargin(hudBinding.playerOverlayAdvFunction, if (!isTv) smallMargin.toInt() else overscanHorizontal, true)
+
+            hudBinding.playerOverlaySeekbar.setPadding(overscanHorizontal, 0, overscanHorizontal, 0)
+
+            if (isTv) {
+                applyMargin(hudBinding.playerOverlayTimeContainer, overscanHorizontal, false)
+                applyMargin(hudBinding.playerOverlayLengthContainer, overscanHorizontal, true)
+            }
+
+            if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
+                hudBinding.playerSpaceLeft.setGone()
+                hudBinding.playerSpaceRight.setGone()
+            } else {
+                hudBinding.playerSpaceLeft.setVisible()
+                hudBinding.playerSpaceRight.setVisible()
+            }
+        }
+        if (::hudRightBinding.isInitialized) {
+            applyVerticalMargin(hudRightBinding.playerOverlayTitle, overscanVertical, false)
+        }
+    }
+
+    private fun applyMargin(view: View, margin: Int, isEnd: Boolean) = (view.layoutParams as ConstraintLayout.LayoutParams).apply {
+        if (isEnd) marginEnd = margin else marginStart = margin
+        view.layoutParams = this
+    }
+
+    private fun applyVerticalMargin(view: View, margin: Int, isBottom: Boolean) = (view.layoutParams as ConstraintLayout.LayoutParams).apply {
+        if (isBottom) bottomMargin = margin else topMargin = margin
+        view.layoutParams = this
+    }
+
     /**
      * hider overlay
      */
-    internal fun hideOverlay(fromUser: Boolean) {
+    fun hideOverlay(fromUser: Boolean) {
         if (isShowing) {
             handler.removeMessages(FADE_OUT)
-            Log.i(TAG, "remove View!")
+            Log.v(TAG, "remove View!")
             overlayTips.setInvisible()
             if (!displayManager.isPrimary) {
                 overlayBackground?.startAnimation(AnimationUtils.loadAnimation(this, android.R.anim.fade_out))
                 overlayBackground.setInvisible()
             }
-            if (::hudBinding.isInitialized) hudBinding.progressOverlay.setInvisible()
-            if (::hudRightBinding.isInitialized) hudRightBinding.hudRightOverlay.setInvisible()
+
+            exitAnimate(arrayOf(hudBinding.progressOverlay, hud_background),100.dp.toFloat())
+            exitAnimate(arrayOf(hudRightBinding.hudRightOverlay, hud_right_background),-100.dp.toFloat())
+
             showControls(false)
             isShowing = false
             dimStatusBar(true)
@@ -2110,6 +2174,24 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
              */
             dimStatusBar(true)
         }
+    }
+
+    private fun enterAnimate(views: Array<View?>, translationStart: Float) = views.forEach { view ->
+        view.setVisible()
+        view?.alpha = 0f
+        view?.translationY = translationStart
+        view?.animate()?.alpha(1F)?.translationY(0F)?.setDuration(150L)?.setListener(null)
+    }
+
+    private fun exitAnimate(views: Array<View?>, translationEnd: Float) = views.forEach { view ->
+        view?.animate()?.alpha(0F)?.translationY(translationEnd)?.setDuration(150L)?.setListener(object : Animator.AnimatorListener {
+            override fun onAnimationEnd(animation: Animator?) {
+                view.setInvisible()
+            }
+            override fun onAnimationCancel(animation: Animator?) {}
+            override fun onAnimationRepeat(animation: Animator?) {}
+            override fun onAnimationStart(animation: Animator?) {}
+        })
     }
 
     /**
@@ -2131,6 +2213,9 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
             window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
             visibility = visibility or View.SYSTEM_UI_FLAG_VISIBLE or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
         }
+
+        player_ui_container?.setPadding(0, 0, 0, 0)
+        player_ui_container?.fitsSystemWindows = !isLocked
 
         if (AndroidDevices.hasNavBar)
             visibility = visibility or navbar
@@ -2300,7 +2385,7 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
             val continueplayback = isPlaying && (restorePlayback || positionInPlaylist == service.currentMediaPosition)
             if (resumePlaylist) {
                 // Provided externally from AudioService
-                if (BuildConfig.DEBUG) Log.d(TAG, "Continuing playback from PlaybackService at index $positionInPlaylist")
+                if (BuildConfig.DEBUG) Log.v(TAG, "Continuing playback from PlaybackService at index $positionInPlaylist")
                 openedMedia = service.media[positionInPlaylist]
                 itemTitle = openedMedia.title
                 updateSeekable(service.isSeekable)
@@ -2343,9 +2428,7 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
                                     showConfirmResumeDialog()
                                     return
                                 } else {
-                                    settings.edit()
-                                            .putLong(VIDEO_RESUME_TIME, -1)
-                                            .apply()
+                                    settings.putSingle(VIDEO_RESUME_TIME, -1L)
                                     startTime = rTime
                                 }
                             }
@@ -2428,26 +2511,18 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
     }
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
-    private fun getScreenOrientation(mode: Int): Int {
-        when (mode) {
-            98 //toggle button
-            -> return if (currentScreenOrientation == Configuration.ORIENTATION_LANDSCAPE)
-                ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
-            else
-                ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
-            99 //screen orientation user
-            -> return if (AndroidUtil.isJellyBeanMR2OrLater)
+    private fun getScreenOrientation(mode: PlayerOrientationMode): Int {
+        return if (!mode.locked) {
+            if (AndroidUtil.isJellyBeanMR2OrLater)
                 ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
             else
                 ActivityInfo.SCREEN_ORIENTATION_SENSOR
-            101 //screen orientation landscape
-            -> return ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
-            102 //screen orientation portrait
-            -> return ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+        } else {
+            mode.orientation
         }
-        /*
-         screenOrientation = 100, we lock screen at its current orientation
-         */
+    }
+
+    private fun getOrientationForLock(): Int {
         val wm = applicationContext.getSystemService(Context.WINDOW_SERVICE) as WindowManager
         val display = wm.defaultDisplay
         val rot = screenRotation
@@ -2515,36 +2590,29 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
 
     fun showAdvancedOptions() {
         if (optionsDelegate == null) service?.let { optionsDelegate = PlayerOptionsDelegate(this, it) }
-        optionsDelegate?.show(PlayerOptionType.ADVANCED)
+        optionsDelegate?.show()
         hideOverlay(false)
     }
 
     private fun toggleOrientation() {
-        //screen is not yet locked. We invert the rotation to force locking in the current orientation
-        if (screenOrientation != 98) {
-            currentScreenOrientation = if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) Configuration.ORIENTATION_LANDSCAPE else Configuration.ORIENTATION_PORTRAIT
-        }
-        screenOrientation = 98//Rotate button
-        requestedOrientation = getScreenOrientation(screenOrientation)
+        orientationMode.locked = !orientationMode.locked
+        orientationMode.orientation = getOrientationForLock()
 
-        //As the current orientation may have been artificially changed above, we reset it to the real current orientation
-        currentScreenOrientation = resources.configuration.orientation
-        @StringRes val message = if (currentScreenOrientation == Configuration.ORIENTATION_LANDSCAPE)
-            R.string.locked_in_landscape_mode
-        else
-            R.string.locked_in_portrait_mode
-        rootView?.let { UiTools.snacker(it, message) }
+        requestedOrientation = getScreenOrientation(orientationMode)
+        updateOrientationIcon()
     }
 
-    private fun resetOrientation(): Boolean {
-        if (screenOrientation == 98) {
-            screenOrientation = Integer.valueOf(
-                    settings.getString(SCREEN_ORIENTATION, "99" /*SCREEN ORIENTATION SENSOR*/)!!)
-            rootView?.let { UiTools.snacker(it, R.string.reset_orientation) }
-            requestedOrientation = getScreenOrientation(screenOrientation)
-            return true
+    private fun updateOrientationIcon() {
+        if (::hudBinding.isInitialized) {
+            val drawable = if (!orientationMode.locked) {
+                R.drawable.ic_player_rotate
+            } else if (orientationMode.orientation == ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE || orientationMode.orientation == ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE) {
+                R.drawable.ic_player_lock_landscape
+            } else {
+                R.drawable.ic_player_lock_portrait
+            }
+            hudBinding.orientationToggle.setImageDrawable(ContextCompat.getDrawable(this, drawable))
         }
-        return false
     }
 
     internal fun togglePlaylist() {
@@ -2596,38 +2664,41 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
 
     fun onClickDismissTips(@Suppress("UNUSED_PARAMETER") v: View) {
         overlayTips.setGone()
-        settings.edit().putBoolean(PREF_TIPS_SHOWN, true).apply()
+        settings.putSingle(PREF_TIPS_SHOWN, true)
     }
 
     private fun updateNavStatus() {
         if (service == null) return
-        isNavMenu = false
         menuIdx = -1
         lifecycleScope.launchWhenStarted {
             val titles = withContext(Dispatchers.IO) { service?.titles }
-                if (isFinishing) return@launchWhenStarted
-                if (titles != null) {
-                    val currentIdx = service?.titleIdx ?: return@launchWhenStarted
-                    for (i in titles.indices) {
-                        val title = titles[i]
-                        if (title.isMenu) {
-                            menuIdx = i
-                            break
-                        }
+            if (isFinishing) return@launchWhenStarted
+            isNavMenu = false
+            if (titles != null) {
+                val currentIdx = service?.titleIdx ?: return@launchWhenStarted
+                for (i in titles.indices) {
+                    val title = titles[i]
+                    if (title.isMenu) {
+                        menuIdx = i
+                        break
                     }
-                    isNavMenu = menuIdx == currentIdx
                 }
+                val interactive = service?.mediaplayer?.let {
+                    (it.titles[it.title])?.isInteractive ?: false
+                } ?: false
+                isNavMenu = menuIdx == currentIdx || interactive
+            }
 
-                if (isNavMenu) {
-                    /*
-                             * Keep the overlay hidden in order to have touch events directly
-                             * transmitted to navigation handling.
-                             */
-                    hideOverlay(false)
-                } else if (menuIdx != -1) setESTracks()
+            if (isNavMenu) {
+                /*
+                         * Keep the overlay hidden in order to have touch events directly
+                         * transmitted to navigation handling.
+                         */
+                hideOverlay(false)
+            } else if (menuIdx != -1) setESTracks()
 
-                navMenu.setVisibility(if (menuIdx >= 0 && navMenu != null) View.VISIBLE else View.GONE)
-                supportInvalidateOptionsMenu()
+            navMenu.setVisibility(if (menuIdx >= 0 && navMenu != null) View.VISIBLE else View.INVISIBLE)
+            supportInvalidateOptionsMenu()
         }
     }
 
@@ -2680,6 +2751,8 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
         internal const val HIDE_INFO = 9
         internal const val HIDE_SEEK = 10
         internal const val HIDE_SETTINGS = 11
+        private const val FADE_OUT_BRIGHTNESS_INFO = 12
+        private const val FADE_OUT_VOLUME_INFO = 13
         private const val KEY_REMAINING_TIME_DISPLAY = "remaining_time_display"
         const val KEY_BLUETOOTH_DELAY = "key_bluetooth_delay"
 
@@ -2735,6 +2808,11 @@ open class VideoPlayerActivity : AppCompatActivity(), PlaybackService.Callback, 
         }
     }
 }
+
+data class PlayerOrientationMode (
+    var locked:Boolean = false,
+    var orientation:Int = 0
+)
 
 @ExperimentalCoroutinesApi
 @ObsoleteCoroutinesApi

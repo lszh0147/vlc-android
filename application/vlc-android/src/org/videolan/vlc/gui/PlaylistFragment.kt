@@ -50,6 +50,7 @@ import org.videolan.vlc.providers.medialibrary.MedialibraryProvider
 import org.videolan.vlc.reloadLibrary
 import org.videolan.resources.CTX_PLAY_ALL
 import org.videolan.tools.Settings
+import org.videolan.tools.putSingle
 import org.videolan.vlc.util.getScreenWidth
 import org.videolan.vlc.viewmodels.mobile.PlaylistsViewModel
 import org.videolan.vlc.viewmodels.mobile.getViewModel
@@ -102,10 +103,14 @@ class PlaylistFragment : BaseAudioBrowser<PlaylistsViewModel>(), SwipeRefreshLay
         super.onActivityCreated(savedInstanceState)
         viewModel.provider.pagedList.observe(requireActivity(), Observer {
             playlistAdapter.submitList(it as PagedList<MediaLibraryItem>)
+            binding.empty.visibility = if (it.isEmpty())View.VISIBLE else View.GONE
         })
-        viewModel.provider.loading.observe(requireActivity(), Observer<Boolean> { loading ->
-            setRefreshing(loading)
-            if (!loading) binding.empty.visibility = if (empty) View.VISIBLE else View.GONE
+        viewModel.provider.loading.observe(requireActivity(), Observer { loading ->
+            setRefreshing(loading) {  }
+        })
+
+        viewModel.provider.liveHeaders.observe(requireActivity(), Observer {
+            playlists.invalidateItemDecorations()
         })
 
         fastScroller.setRecyclerView(getCurrentRV(), viewModel.provider)
@@ -131,7 +136,7 @@ class PlaylistFragment : BaseAudioBrowser<PlaylistsViewModel>(), SwipeRefreshLay
                 setupLayoutManager()
                 playlists.adapter = adapter
                 activity?.invalidateOptionsMenu()
-                Settings.getInstance(requireActivity()).edit().putBoolean(viewModel.displayModeKey, item.itemId == R.id.ml_menu_display_grid).apply()
+                Settings.getInstance(requireActivity()).putSingle(viewModel.displayModeKey, item.itemId == R.id.ml_menu_display_grid)
                 true
             }
             else -> super.onOptionsItemSelected(item)
@@ -165,7 +170,7 @@ class PlaylistFragment : BaseAudioBrowser<PlaylistsViewModel>(), SwipeRefreshLay
         } else super.onClick(v, position, item)
     }
 
-    override fun onCtxAction(position: Int, option: Int) {
+    override fun onCtxAction(position: Int, option: Long) {
         if (option == CTX_PLAY_ALL) MediaUtils.playAll(activity, viewModel.provider as MedialibraryProvider<MediaWrapper>, position, false)
         else super.onCtxAction(position, option)
     }

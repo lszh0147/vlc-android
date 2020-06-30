@@ -91,13 +91,14 @@
                 vlc:layout_constraintEnd_toEndOf="parent"
                 vlc:layout_constraintStart_toStartOf="parent"
                 vlc:layout_constraintTop_toTopOf="parent"
-                vlc:media="@{item}" />
+                vlc:media="@{item}"
+                vlc:tv="@{true}"/>
 
-        <ImageView
+        <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/ml_item_seen"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:src="@drawable/ic_seen_normal"
+                vlc:srcCompat="@drawable/ic_seen_normal"
                 android:visibility="@{seen == 0L ? View.GONE : View.VISIBLE}"
                 vlc:layout_constraintRight_toRightOf="parent"
                 vlc:layout_constraintTop_toTopOf="parent"/>
@@ -183,7 +184,7 @@
                 android:textAppearance="@style/VLCImageCardViewContentStyleTextAppearance"
                 android:textSize="11sp"
                 tools:text="@string/add_custom_path_description"
-                vlc:asyncText="@{description}"
+                vlc:browserDescription="@{description}"
                 vlc:layout_constraintBottom_toBottomOf="parent"
                 vlc:layout_constraintEnd_toEndOf="parent"
                 vlc:layout_constraintStart_toStartOf="parent"

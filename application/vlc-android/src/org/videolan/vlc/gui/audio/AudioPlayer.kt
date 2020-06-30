@@ -47,16 +47,13 @@ import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.vectordrawable.graphics.drawable.AnimatedVectorDrawableCompat
 import com.google.android.material.bottomsheet.BottomSheetBehavior
-import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.onEach
 import org.videolan.medialibrary.Tools
 import org.videolan.medialibrary.interfaces.media.MediaWrapper
 import org.videolan.resources.*
-import org.videolan.tools.PREF_PLAYLIST_TIPS_SHOWN
-import org.videolan.tools.Settings
-import org.videolan.tools.dp
+import org.videolan.tools.*
 import org.videolan.vlc.PlaybackService
 import org.videolan.vlc.R
 import org.videolan.vlc.databinding.AudioPlayerBinding
@@ -65,7 +62,6 @@ import org.videolan.vlc.gui.InfoActivity
 import org.videolan.vlc.gui.dialogs.CtxActionReceiver
 import org.videolan.vlc.gui.dialogs.showContext
 import org.videolan.vlc.gui.helpers.AudioUtil.setRingtone
-import org.videolan.vlc.gui.helpers.PlayerOptionType
 import org.videolan.vlc.gui.helpers.PlayerOptionsDelegate
 import org.videolan.vlc.gui.helpers.SwipeDragItemTouchHelperCallback
 import org.videolan.vlc.gui.helpers.UiTools
@@ -195,7 +191,7 @@ class AudioPlayer : Fragment(), PlaylistAdapter.IPlayer, TextWatcher, IAudioPlay
     }
 
     private val ctxReceiver: CtxActionReceiver = object : CtxActionReceiver {
-        override fun onCtxAction(position: Int, option: Int) {
+        override fun onCtxAction(position: Int, option: Long) {
             if (position in 0 until playlistAdapter.itemCount) when (option) {
                 CTX_SET_RINGTONE -> activity?.setRingtone(playlistAdapter.getItem(position))
                 CTX_ADD_TO_PLAYLIST -> {
@@ -312,6 +308,7 @@ class AudioPlayer : Fragment(), PlaylistAdapter.IPlayer, TextWatcher, IAudioPlay
         lifecycleScope.launchWhenStarted {
             val text = withContext(Dispatchers.Default) {
                 val medias = playlistModel.medias ?: return@withContext ""
+                if (playlistModel.currentMediaPosition == -1) return@withContext ""
                 val elapsedTracksTime = medias.asSequence()
                         .take(playlistModel.currentMediaPosition)
                         .map { it.length }
@@ -353,11 +350,11 @@ class AudioPlayer : Fragment(), PlaylistAdapter.IPlayer, TextWatcher, IAudioPlay
     }
 
     fun onNextClick(view: View) {
-        if (!playlistModel.next()) Snackbar.make(binding.root, R.string.lastsong, Snackbar.LENGTH_SHORT).show()
+        if (!playlistModel.next()) activity?.window?.decorView?.let { UiTools.snacker(it, R.string.lastsong) }
     }
 
     fun onPreviousClick(view: View) {
-        if (!playlistModel.previous()) Snackbar.make(binding.root, R.string.firstsong, Snackbar.LENGTH_SHORT).show()
+        if (!playlistModel.previous()) activity?.window?.decorView?.let { UiTools.snacker(it,  R.string.firstsong) }
     }
 
     fun onRepeatClick(view: View) {
@@ -371,7 +368,7 @@ class AudioPlayer : Fragment(), PlaylistAdapter.IPlayer, TextWatcher, IAudioPlay
 
     fun onPlaylistSwitchClick(view: View) {
         switchShowCover()
-        settings.edit().putBoolean("audio_player_show_cover", isShowingCover()).apply()
+        settings.putSingle("audio_player_show_cover", isShowingCover())
         binding.playlistSwitch.setImageResource(UiTools.getResourceFromAttribute(view.context, if (isShowingCover()) R.attr.ic_playlist else R.attr.ic_playlist_on))
     }
 
@@ -398,7 +395,7 @@ class AudioPlayer : Fragment(), PlaylistAdapter.IPlayer, TextWatcher, IAudioPlay
             val activity = activity as? AppCompatActivity ?: return
             optionsDelegate = PlayerOptionsDelegate(activity, service)
         }
-        optionsDelegate.show(PlayerOptionType.ADVANCED)
+        optionsDelegate.show()
     }
 
     fun onSearchClick(v: View) {
@@ -581,6 +578,13 @@ class AudioPlayer : Fragment(), PlaylistAdapter.IPlayer, TextWatcher, IAudioPlay
             activity.slideUpOrDownAudioPlayer()
         }
 
+        override fun onTouchLongClick() {
+            val trackInfo = playlistModel.title ?: return
+
+            requireActivity().copy("VLC - song name", trackInfo)
+            activity?.window?.decorView?.let { UiTools.snacker(it, R.string.track_info_copied_to_clipboard) }
+        }
+
         override fun onTouchDown() {}
 
         override fun onTouchUp() {}
@@ -589,7 +593,7 @@ class AudioPlayer : Fragment(), PlaylistAdapter.IPlayer, TextWatcher, IAudioPlay
     private val mCoverMediaSwitcherListener = object : AudioMediaSwitcherListener by AudioMediaSwitcher.EmptySwitcherListener {
 
         override fun onMediaSwitching() {
-            (activity as? AudioPlayerContainerActivity)?.bottomSheetBehavior?.lock(true)
+            (activity as? AudioPlayerContainerActivity)?.playerBehavior?.lock(true)
         }
 
         override fun onMediaSwitched(position: Int) {
@@ -597,7 +601,7 @@ class AudioPlayer : Fragment(), PlaylistAdapter.IPlayer, TextWatcher, IAudioPlay
                 AudioMediaSwitcherListener.PREVIOUS_MEDIA -> playlistModel.previous(true)
                 AudioMediaSwitcherListener.NEXT_MEDIA -> playlistModel.next()
             }
-            (activity as? AudioPlayerContainerActivity)?.bottomSheetBehavior?.lock(false)
+            (activity as? AudioPlayerContainerActivity)?.playerBehavior?.lock(false)
         }
     }
 

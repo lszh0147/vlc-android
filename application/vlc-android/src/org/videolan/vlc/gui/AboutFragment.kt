@@ -21,7 +21,9 @@
 package org.videolan.vlc.gui
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.content.res.Configuration
+import android.net.Uri
 import android.os.Bundle
 import android.util.Base64
 import android.view.LayoutInflater
@@ -44,6 +46,7 @@ import org.videolan.vlc.BuildConfig
 import org.videolan.vlc.R
 import org.videolan.vlc.gui.audio.AudioPagerAdapter
 import org.videolan.vlc.gui.helpers.UiTools
+
 
 private const val TAG = "VLC/AboutFragment"
 private const val MODE_TOTAL = 2 // Number of audio browser modes
@@ -78,7 +81,7 @@ class AboutFragment : Fragment() {
         }
         lifecycleScope.launch {
             UiTools.fillAboutView(view)
-            webView.loadUrl("file:///android_asset/licence.htm")
+            webView.loadUrl("file:///android_asset/license.htm")
 
             webView.webViewClient = object : WebViewClient() {
 
@@ -87,18 +90,28 @@ class AboutFragment : Fragment() {
                         // Inject CSS when page is done loading
                         injectCSS(webView, when (context?.resources?.configuration?.uiMode?.and(Configuration.UI_MODE_NIGHT_MASK)) {
                             Configuration.UI_MODE_NIGHT_YES -> {
-                                "licence_dark.css"
+                                "license_dark.css"
                             }
                             Configuration.UI_MODE_NIGHT_NO -> {
-                                "licence_light.css"
+                                "license_light.css"
                             }
                             else -> {
-                                "licence_light.css"
+                                "license_light.css"
                             }
                         })
                         injectCommitRevision(webView, revision)
                     }
                     super.onPageFinished(view, url)
+                }
+
+                override fun shouldOverrideUrlLoading(view: WebView, url: String): Boolean {
+                    if (url.contains("file://")) {
+                        view.loadUrl(url)
+                    } else {
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                        startActivity(intent)
+                    }
+                    return true
                 }
             }
         }
@@ -121,6 +134,7 @@ class AboutFragment : Fragment() {
                     "style.innerHTML = window.atob('" + encoded + "');" +
                     "parent.appendChild(style);" +
                     "})()")
+
             webView.settings.javaScriptEnabled = false
         } catch (e: Exception) {
             e.printStackTrace()
@@ -138,6 +152,7 @@ class AboutFragment : Fragment() {
                     "link.setAttribute('href', newLink);" +
                     "link.innerText = newLink;" +
                     "})()")
+
             webView.settings.javaScriptEnabled = false
         } catch (e: Exception) {
             e.printStackTrace()

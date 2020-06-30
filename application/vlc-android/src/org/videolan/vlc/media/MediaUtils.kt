@@ -34,6 +34,7 @@ import org.videolan.tools.localBroadcastManager
 import org.videolan.tools.safeOffer
 import org.videolan.vlc.PlaybackService
 import org.videolan.vlc.R
+import org.videolan.vlc.gui.AudioPlayerContainerActivity
 import org.videolan.vlc.gui.DialogActivity
 import org.videolan.vlc.gui.dialogs.SubtitleDownloaderDialogFragment
 import org.videolan.vlc.providers.medialibrary.FoldersProvider
@@ -41,6 +42,7 @@ import org.videolan.vlc.providers.medialibrary.MedialibraryProvider
 import org.videolan.vlc.providers.medialibrary.VideoGroupsProvider
 import org.videolan.vlc.util.FileUtils
 import org.videolan.vlc.util.Permissions
+import java.io.File
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.math.min
@@ -73,6 +75,34 @@ object MediaUtils {
         else Permissions.askWriteStoragePermission(activity, false, callBack)
     }
 
+    suspend fun deleteMedia(mw: MediaLibraryItem, failCB: Runnable? = null) = withContext(Dispatchers.IO) {
+        val foldersToReload = LinkedList<String>()
+        val mediaPaths = LinkedList<String>()
+        for (media in mw.tracks) {
+            val path = media.uri.path
+            val parentPath = FileUtils.getParent(path)
+            if (FileUtils.deleteFile(media.uri)) parentPath?.let {
+                if (media.id > 0L && !foldersToReload.contains(it)) {
+                    foldersToReload.add(it)
+                }
+                mediaPaths.add(media.location)
+            }
+        }
+        val mediaLibrary = Medialibrary.getInstance()
+        for (folder in foldersToReload) mediaLibrary.reload(folder)
+        if (mw is Album) {
+            foldersToReload.forEach {
+                if (File(it).list().isNullOrEmpty()) {
+                    FileUtils.deleteFile(it)
+                }
+            }
+        }
+        if (mediaPaths.isEmpty()) {
+            failCB?.run()
+            false
+        } else true
+    }
+
     fun loadlastPlaylist(context: Context?, type: Int) {
         if (context == null) return
         SuspendDialogCallback(context) { service -> service.loadLastPlaylist(type) }
@@ -84,7 +114,11 @@ object MediaUtils {
             service.append(media)
             context.let {
                 if (it is Activity) {
-                    Snackbar.make(it.findViewById(android.R.id.content), R.string.appended, Snackbar.LENGTH_LONG).show()
+                    val text = context.resources.getQuantityString(R.plurals.tracks_appended, media.size, media.size)
+                    if (it is AudioPlayerContainerActivity) {
+                        Snackbar.make(it.appBarLayout, text, Snackbar.LENGTH_LONG).show()
+                    } else
+                    Snackbar.make(it.findViewById(android.R.id.content), text, Snackbar.LENGTH_LONG).show()
                 }
             }
         }
@@ -102,7 +136,8 @@ object MediaUtils {
             service.insertNext(media)
             context.let {
                 if (it is Activity) {
-                    Snackbar.make(it.findViewById(android.R.id.content), R.string.inserted, Snackbar.LENGTH_LONG).show()
+                    val text = context.resources.getQuantityString(R.plurals.tracks_inserted, media.size, media.size)
+                    Snackbar.make(it.findViewById(android.R.id.content), text, Snackbar.LENGTH_LONG).show()
                 }
             }
         }
@@ -205,7 +240,9 @@ object MediaUtils {
             when (count) {
                 0 -> return@SuspendDialogCallback
                 in 1..MEDIALIBRARY_PAGE_SIZE -> play(withContext(Dispatchers.IO) {
-                    provider.getAll().toList()
+                    provider.getAll().flatMap {
+                        it.media(Medialibrary.SORT_DEFAULT, false, it.mediaCount(), 0).toList()
+                    }
                 })
                 else -> {
                     var index = 0
@@ -261,6 +298,16 @@ object MediaUtils {
         if (list.isNullOrEmpty() || context == null) return
         SuspendDialogCallback(context) { service ->
             service.load(list, position)
+            if (shuffle && !service.isShuffling) service.shuffle()
+        }
+    }
+
+    @JvmOverloads
+    fun openPlaylist(context: Context?, playlistId: Long, position: Int = 0, shuffle: Boolean = false) {
+        if (playlistId == -1L || context == null) return
+        SuspendDialogCallback(context) { service ->
+           val playlist =  context.getFromMl { getPlaylist(playlistId) }
+            service.load(playlist.getPagedTracks(playlist.realTracksCount, 0), position)
             if (shuffle && !service.isShuffling) service.shuffle()
         }
     }

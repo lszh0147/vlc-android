@@ -49,14 +49,14 @@ AndroidMediaLibrary::~AndroidMediaLibrary()
 medialibrary::InitializeResult
 AndroidMediaLibrary::initML(const std::string& dbPath, const std::string& thumbsPath)
 {
-    p_DeviceListerCb = p_ml->setDeviceLister(p_lister);
+    p_ml->registerDeviceLister(p_lister, "file://");
     return p_ml->initialize(dbPath, thumbsPath, this);
 }
 
 void
 AndroidMediaLibrary::start()
 {
-    p_ml->start();
+//    p_ml->start();
     m_started = true;
 }
 
@@ -66,11 +66,22 @@ AndroidMediaLibrary::clearDatabase(bool restorePlaylists) {
     p_ml->clearDatabase(restorePlaylists);
 }
 
-bool
+void
 AndroidMediaLibrary::addDevice(const std::string& uuid, const std::string& path, bool removable)
 {
     p_lister->addDevice(uuid, path, removable);
-    return p_DeviceListerCb != nullptr && (p_DeviceListerCb->onDeviceMounted(uuid, path));
+}
+
+bool
+AndroidMediaLibrary::isDeviceKnown(const std::string& uuid, const std::string& path, bool removable)
+{
+    return p_ml->isDeviceKnown(uuid, path, removable);
+}
+
+bool
+AndroidMediaLibrary::deleteRemovableDevices()
+{
+    return p_ml->deleteRemovableDevices();
 }
 
 std::vector<std::tuple<std::string, std::string, bool>>
@@ -82,10 +93,7 @@ AndroidMediaLibrary::devices()
 bool
 AndroidMediaLibrary::removeDevice(const std::string& uuid, const std::string& path)
 {
-    bool removed = p_lister->removeDevice(uuid);
-    if (removed && p_DeviceListerCb != nullptr)
-        p_DeviceListerCb->onDeviceUnmounted(uuid, path);
-    return removed;
+    return p_lister->removeDevice(uuid, path);
 }
 
 void
@@ -280,6 +288,12 @@ AndroidMediaLibrary::searchFromPLaylist( int64_t playlistId, const std::string& 
 {
     auto playlist = p_ml->playlist(playlistId);
     return playlist == nullptr ? nullptr : playlist->searchMedia(query, params);
+}
+
+medialibrary::Query<medialibrary::IFolder>
+AndroidMediaLibrary::searchFolders(const std::string& query, const medialibrary::QueryParameters* params)
+{
+    return p_ml->searchFolders(query, medialibrary::IMedia::Type::Video, params);
 }
 
 medialibrary::Query<medialibrary::IMedia>
@@ -516,7 +530,13 @@ medialibrary::Query<medialibrary::IFolder> AndroidMediaLibrary::subFolders(int64
 medialibrary::Query<medialibrary::IMediaGroup>
 AndroidMediaLibrary::videoGroups( const medialibrary::QueryParameters* params )
 {
-    return p_ml->mediaGroups(params);
+    return p_ml->mediaGroups(medialibrary::IMedia::Type::Video, params);
+}
+
+medialibrary::Query<medialibrary::IMediaGroup>
+AndroidMediaLibrary::searchVideoGroups( const std::string& query, const medialibrary::QueryParameters* params )
+{
+    return p_ml->searchMediaGroups(query, params);
 }
 
 medialibrary::MediaGroupPtr
@@ -537,6 +557,80 @@ AndroidMediaLibrary::searchFromMediaGroup( const int64_t groupId, const std::str
 {
     auto group = p_ml->mediaGroup(groupId);
     return group == nullptr ? nullptr : group->searchMedia(query, medialibrary::IMedia::Type::Video, params);
+}
+
+bool
+AndroidMediaLibrary::groupAddId( const int64_t groupId, const int64_t mediaId )
+{
+    medialibrary::MediaGroupPtr group = p_ml->mediaGroup(groupId);
+    return group != nullptr && group->add(mediaId);
+}
+
+bool
+AndroidMediaLibrary::groupRemoveId( const int64_t groupId, const int64_t mediaId )
+{
+    medialibrary::MediaGroupPtr group = p_ml->mediaGroup(groupId);
+    return group != nullptr && group->remove(mediaId);
+}
+
+std::string
+AndroidMediaLibrary::groupName( const int64_t groupId )
+{
+    const medialibrary::MediaGroupPtr group = p_ml->mediaGroup(groupId);
+    return group == nullptr ? nullptr : group->name();
+}
+
+bool
+AndroidMediaLibrary::groupRename( const int64_t groupId, const std::string& name )
+{
+    medialibrary::MediaGroupPtr group = p_ml->mediaGroup(groupId);
+    return group != nullptr && group->rename(name);
+}
+
+bool
+AndroidMediaLibrary::groupUserInteracted( const int64_t groupId )
+{
+    medialibrary::MediaGroupPtr group = p_ml->mediaGroup(groupId);
+    return group != nullptr && group->userInteracted();
+}
+
+int64_t
+AndroidMediaLibrary::groupDuration( const int64_t groupId )
+{
+    medialibrary::MediaGroupPtr group = p_ml->mediaGroup(groupId);
+    return group == nullptr ? 0 : group->duration();
+}
+
+bool
+AndroidMediaLibrary::groupDestroy( const int64_t groupId )
+{
+    medialibrary::MediaGroupPtr group = p_ml->mediaGroup(groupId);
+    return group != nullptr && group->destroy();
+}
+
+medialibrary::MediaGroupPtr
+AndroidMediaLibrary::createMediaGroup( std::string name )
+{
+    return p_ml->createMediaGroup(name);
+}
+
+bool
+AndroidMediaLibrary::regroupAll()
+{
+    return p_ml->regroupAll();
+}
+
+bool
+AndroidMediaLibrary::regroup(int64_t mediaId)
+{
+    auto media = p_ml->media(mediaId);
+    return media != nullptr && media->regroup();
+}
+
+medialibrary::MediaGroupPtr
+AndroidMediaLibrary::createMediaGroup( const std::vector<int64_t> mediaIds )
+{
+    return p_ml->createMediaGroup(mediaIds);
 }
 
 void

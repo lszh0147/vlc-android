@@ -37,7 +37,6 @@ import androidx.appcompat.widget.AppCompatEditText
 import androidx.collection.SimpleArrayMap
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProviders
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -45,16 +44,13 @@ import kotlinx.coroutines.ObsoleteCoroutinesApi
 import kotlinx.coroutines.launch
 import org.videolan.libvlc.util.AndroidUtil
 import org.videolan.medialibrary.MLServiceLocator
-import org.videolan.medialibrary.interfaces.Medialibrary
 import org.videolan.medialibrary.interfaces.EntryPointsEventsCb
+import org.videolan.medialibrary.interfaces.Medialibrary
 import org.videolan.medialibrary.interfaces.media.MediaWrapper
 import org.videolan.medialibrary.media.MediaLibraryItem
 import org.videolan.medialibrary.media.Storage
 import org.videolan.resources.CTX_CUSTOM_REMOVE
-import org.videolan.tools.KEY_MEDIALIBRARY_SCAN
-import org.videolan.tools.ML_SCAN_ON
-import org.videolan.tools.Settings
-import org.videolan.tools.sanitizePath
+import org.videolan.tools.*
 import org.videolan.vlc.MediaParsingService
 import org.videolan.vlc.R
 import org.videolan.vlc.databinding.BrowserItemBinding
@@ -64,7 +60,6 @@ import org.videolan.vlc.gui.helpers.MedialibraryUtils
 import org.videolan.vlc.gui.helpers.ThreeStatesCheckbox
 import org.videolan.vlc.gui.helpers.UiTools
 import org.videolan.vlc.gui.onboarding.OnboardingActivity
-import org.videolan.vlc.viewmodels.browser.BrowserModel
 import org.videolan.vlc.viewmodels.browser.TYPE_STORAGE
 import org.videolan.vlc.viewmodels.browser.getBrowserModel
 import java.io.File
@@ -73,12 +68,13 @@ const val KEY_IN_MEDIALIB = "key_in_medialib"
 
 @ObsoleteCoroutinesApi
 @ExperimentalCoroutinesApi
-class StorageBrowserFragment : FileBrowserFragment(), EntryPointsEventsCb {
+class StorageBrowserFragment : FileBrowserFragment(), EntryPointsEventsCb, BrowserContainer<MediaLibraryItem> {
 
-    internal var scannedDirectory = false
+    override var scannedDirectory = false
     private val processingFolders = SimpleArrayMap<String, CheckBox>()
     private var snack: com.google.android.material.snackbar.Snackbar? = null
     private var alertDialog: AlertDialog? = null
+    override val inCards = false
 
     override val categoryTitle: String
         get() = getString(R.string.directories_summary)
@@ -164,7 +160,7 @@ class StorageBrowserFragment : FileBrowserFragment(), EntryPointsEventsCb {
         }
     }
 
-    override fun onCtxAction(position: Int, option: Int) {
+    override fun onCtxAction(position: Int, option: Long) {
         val storage = adapter.getItem(position) as Storage
         val path = storage.uri.path ?: return
         viewModel.deleteCustomDirectory(path)
@@ -196,7 +192,7 @@ class StorageBrowserFragment : FileBrowserFragment(), EntryPointsEventsCb {
             if (checked) {
                 MedialibraryUtils.addDir(mrl, v.context.applicationContext)
                 val prefs = Settings.getInstance(v.getContext())
-                if (prefs.getInt(KEY_MEDIALIBRARY_SCAN, -1) != ML_SCAN_ON) prefs.edit().putInt(KEY_MEDIALIBRARY_SCAN, ML_SCAN_ON).apply()
+                if (prefs.getInt(KEY_MEDIALIBRARY_SCAN, -1) != ML_SCAN_ON) prefs.putSingle(KEY_MEDIALIBRARY_SCAN, ML_SCAN_ON)
             } else
                 MedialibraryUtils.removeDir(mrl)
             processEvent(v as CheckBox, mrl)
@@ -271,4 +267,9 @@ class StorageBrowserFragment : FileBrowserFragment(), EntryPointsEventsCb {
         })
         alertDialog = builder.show()
     }
+
+    override fun containerActivity() = requireActivity()
+
+    override val isNetwork = false
+    override val isFile = true
 }
