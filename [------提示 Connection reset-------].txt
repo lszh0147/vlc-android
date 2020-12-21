@@ -1,0 +1,9 @@
+ Android Studio提示 Connection reset
+
+解决步骤
+
+1Android studio开发工具：
+File - Invalidate caches  Restart；选择Invalidate and Restart
+关闭 Android Studio
+2删除 “home{username}.gradle” 文件夹
+3重启android studio
