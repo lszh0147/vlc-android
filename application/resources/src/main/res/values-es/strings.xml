@@ -127,8 +127,6 @@
     <string name="firstsong">Primera canción de la lista de reproducción</string>
     <string name="lastsong">Última canción de la lista de reproducción</string>
 
-    <string name="locked">Bloqueda</string>
-    <string name="unlocked">Desbloqueada</string>
     <string name="surface_best_fit">Mejor ajuste</string>
     <string name="surface_fit_screen">Ajustar a pantalla</string>
     <string name="surface_fill">Rellenar</string>
@@ -148,9 +146,6 @@
     <string name="brightness">Brillo</string>
     <string name="advanced">opciones avanzadas</string>
     <string name="audio_boost_warning">Arrastre hacia arriba de nuevo para subir más del 100%</string>
-    <string name="locked_in_portrait_mode">Bloqueado en modo retrato\n(Pulsación larga en botón para cancelar)</string>
-    <string name="locked_in_landscape_mode">Bloqueado en modo apaisado\n(Pulsación larga en botón para cancelar)</string>
-    <string name="reset_orientation">Restablecer orientación</string>
 
     <plurals name="track_channels_info_quantity">
         <item quantity="one">1 canal\n</item>
@@ -413,13 +408,11 @@
 
     <string name="delete_sub_title">Eliminar subtítulo</string>
     <string name="delete_sub_message">¿Desea eliminar este subtítulo?</string>
-    <string name="delete_sub_yes">Sí</string>
-    <string name="delete_sub_no">No</string>
     <string name="download_subtitle_title">Descargar subtítulo</string>
 
     <string name="no_result">No se han econtrado resultados</string>
     <string name="no_internet_connection">Compruebe su conexión a internet</string>
-    <string name="some_error_occurred">Ocurrió algún error. Inténtelo de nuevo en unos segundos</string>
+    <string name="subs_download_error">Servicio no disponible. Inténtelo más tarde de nuevo.</string>
 
     <string name="network_browsing">Red local</string>
     <string name="browsing">Explorando</string>
@@ -509,7 +502,9 @@
     <string name="ml_external_storage_msg">¿Desea que VLC añada el dispositivo %1$s a su biblioteca?</string>
     <string name="ml_external_storage_accept">Sí</string>
     <string name="ml_external_storage_decline">No</string>
-    <string name="last_added_media">último añadido</string>
+    <string name="auto_last_added_media">Último añadido</string>
+    <string name="auto_my_library">Mi librería</string>
+    <string name="auto_home">Inicio</string>
     <string name="no">No</string>
     <string name="loading_medialibrary">Cargando blbliteca…</string>
     <string name="yes">Sí</string>
@@ -716,4 +711,51 @@
     <string name="group_similar">Reagrupar automáticamente</string>
     <string name="no_favorite">No favorito</string>
     <string name="empty_directory">Vacío</string>
+    <string name="no_track">No hay pistas</string>
+
+    <string name="swipe_unlock">Arrastrar para desbloquear</string>
+    <string name="swipe_unlock_no_touch">Pulsación larga para desbloquear</string>
+    <string name="sub_result_by_name">Resultados para %s</string>
+    <string name="sub_result_by_name_season">Temporada %s</string>
+    <string name="sub_result_by_name_episode">Episodio %s</string>
+
+    <string name="sub_result_by_file">Resultados para su archivo</string>
+    <string name="donate">Ayudar a VLC</string>
+    <string name="donate_desc">Apoyar a los voluntarios contruyendo VLC</string>
+    <string name="donate_subscribtion">Me gustaría que este fuera un patrocinio mensual</string>
+    <string name="donate_send">Iniciar su patrocinio</string>
+    <string name="donation_description">Su patrocinio nos ayudará a:\nMejorar la app de VLC para Android\nApoyar la VideoLAN Association</string>
+    <string name="subscription_purchased">Está suscrito al patrocinio mensual</string>
+    <string name="subscription_cancel">Puede desuscribirse en la Play Store</string>
+    <string name="subscription_cancel_tv">Como desuscribirse</string>
+    <string name="donate_unsubscribe_tv">Para desuscribirse, abra %s en un teléfono, en un ordenador o escanee este código:</string>
+    <string name="tip_jar">Ayudar a VLC</string>
+    <string name="thank_you">Gracias</string>
+    <string name="thank_you_desc">Gracias por su patrocinio\nNos ayudará mucho a mejorar VLC!</string>
+    <string name="donate_again">Patrocinar la app de nuevo</string>
+
+    <string name="mark_as_played">Marcar como reproducido</string>
+    <string name="mark_all_as_played">Marcar todo como reproducido</string>
+    <string name="new_group">Nuevo grupo</string>
+    <string name="new_group_desc">Crear nuevo grupo</string>
+
+    <string name="air_action_rewind">Retroceder 10 seg</string>
+    <string name="air_action_forward">Avanzar 10 seg</string>
+    <string name="air_action_play_pause">Pausar/continuar reproducción</string>
+    <string name="air_action_volume_up">Subir volumen</string>
+    <string name="air_action_volume_down">Bajar volumen</string>
+    <string name="air_action_next">Siguiente elemento en reproducción</string>
+    <string name="air_action_previous">Anterior elemento en reproducción</string>
+    <string name="allow_otg">Permitir acceso OTG</string>
+    <string name="allow_otg_description">Seleccione su unidad OTG para permitir acceso a VLC.</string>
+    <string name="timeout_infinite">Infinito</string>
+    <string name="timeout_short">Corto</string>
+    <string name="timeout_normal">Normal</string>
+    <string name="timeout_long">Largo</string>
+    <string name="video_hud_timeout">Retraso de ocultación de los controles del reproductor de vídeo</string>
+    <string name="remove_from_history">Eliminar del historial</string>
+    <string name="prefersmbv1">Preferir SMB 1</string>
+    <string name="prefersmbv1_summary">Desmarque esta preferencia si tiene dificultades la explorar su servidor SMB</string>
+    <string name="apply_to_all">Aplicar a todos los vídeos</string>
+    <string name="audio_delay_global">Retraso de audio establecido a %s ms para todos los vídeos</string>
 </resources>

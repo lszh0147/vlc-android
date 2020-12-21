@@ -21,16 +21,19 @@
 package org.videolan.resources
 
 import android.annotation.TargetApi
+import android.app.UiModeManager
 import android.content.Context
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.net.Uri
 import android.os.Build
 import android.os.Build.VERSION_CODES
 import android.os.Environment
 import android.telephony.TelephonyManager
-import android.text.TextUtils
 import android.view.InputDevice
 import android.view.MotionEvent
+import androidx.core.content.getSystemService
+import androidx.core.net.toUri
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.ObsoleteCoroutinesApi
 import org.videolan.libvlc.util.AndroidUtil
@@ -52,7 +55,7 @@ object AndroidDevices {
     val isAndroidTv: Boolean
     val watchDevices: Boolean
     val isTv: Boolean
-    val isAmazon = TextUtils.equals(Build.MANUFACTURER, "Amazon")
+    val isAmazon = Build.MANUFACTURER == "Amazon"
     val isChromeBook: Boolean
     val hasPiP: Boolean
     val pipAllowed: Boolean
@@ -131,7 +134,7 @@ object AndroidDevices {
         hasPlayServices = pm == null || hasPlayServices(pm)
         hasPiP = AndroidUtil.isOOrLater && pm != null && pm.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE) || AndroidUtil.isNougatOrLater && isAndroidTv
         pipAllowed = hasPiP || hasTsp && !AndroidUtil.isOOrLater
-        val tm = if (ctx != null) ctx.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager else null
+        val tm = ctx?.getSystemService<TelephonyManager>()
         isPhone = tm == null || tm.phoneType != TelephonyManager.PHONE_TYPE_NONE
     }
 
@@ -139,11 +142,7 @@ object AndroidDevices {
         return Environment.getExternalStorageState() == Environment.MEDIA_MOUNTED
     }
 
-    fun showInternalStorage(): Boolean {
-        return (!TextUtils.equals(Build.BRAND, "Swisscom") && !TextUtils.equals(Build.BOARD, "sprint")
-                && !TextUtils.equals(Build.BRAND, "BouyguesTelecom"))
-    }
-
+    fun showInternalStorage() = Build.BRAND !in arrayOf("Swisscom", "BouyguesTelecom") && Build.BOARD != "sprint"
 
     @TargetApi(VERSION_CODES.HONEYCOMB_MR1)
     fun getCenteredAxis(event: MotionEvent, device: InputDevice, axis: Int): Float {
@@ -167,6 +166,11 @@ object AndroidDevices {
 
     fun canUseSystemNightMode(): Boolean {
         return Build.VERSION.SDK_INT > VERSION_CODES.P || Build.VERSION.SDK_INT == VERSION_CODES.P && "samsung" == Build.MANUFACTURER.toLowerCase(Locale.US)
+    }
+
+    fun isCarMode(ctx: Context): Boolean {
+        val uiModeManager = ctx.getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
+        return uiModeManager.currentModeType == Configuration.UI_MODE_TYPE_CAR
     }
 
     private fun hasPlayServices(pm: PackageManager): Boolean {
@@ -207,12 +211,11 @@ object AndroidDevices {
         val WHATSAPP_VIDEOS_FILE_URI = getFolderUri(WHATSAPP_VIDEOS_FILE)
 
         private fun getFolderUri(file: File): Uri {
-            try {
-                return Uri.parse("file://" + file.canonicalPath)
+            return try {
+                "file://${file.canonicalPath}".toUri()
             } catch (ignored: IOException) {
-                return Uri.parse("file://" + file.path)
+                "file://${file.path}".toUri()
             }
-
         }
 
         fun isOneOfMediaFolders(uri: Uri) = EXTERNAL_PUBLIC_MOVIES_DIRECTORY_URI == uri || EXTERNAL_PUBLIC_MUSIC_DIRECTORY_URI == uri || EXTERNAL_PUBLIC_PODCAST_DIRECTORY_URI == uri || EXTERNAL_PUBLIC_DOWNLOAD_DIRECTORY_URI == uri || EXTERNAL_PUBLIC_DCIM_DIRECTORY_URI == uri || WHATSAPP_VIDEOS_FILE == uri

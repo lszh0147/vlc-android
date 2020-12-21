@@ -21,9 +21,9 @@
 package org.videolan.vlc.gui
 
 import android.annotation.SuppressLint
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.res.Configuration
-import android.net.Uri
 import android.os.Bundle
 import android.util.Base64
 import android.view.LayoutInflater
@@ -32,6 +32,7 @@ import android.view.ViewGroup
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.net.toUri
 import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -62,7 +63,7 @@ class AboutFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        (activity as? AppCompatActivity)?.supportActionBar?.title = "VLC ${BuildConfig.VERSION_NAME}"
+        (activity as? AppCompatActivity)?.supportActionBar?.title = "VLC ${BuildConfig.VLC_VERSION_NAME}"
 
         requireActivity().findViewById<FloatingActionButton>(R.id.fab).setGone()
         val aboutMain = view.findViewById<NestedScrollView>(R.id.about_main)
@@ -108,8 +109,13 @@ class AboutFragment : Fragment() {
                     if (url.contains("file://")) {
                         view.loadUrl(url)
                     } else {
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                        startActivity(intent)
+                        val intent = Intent(Intent.ACTION_VIEW, url.toUri())
+                        try {
+                            startActivity(intent)
+                        } catch (e: ActivityNotFoundException) {
+                            view.loadUrl(url)
+                        }
+
                     }
                     return true
                 }

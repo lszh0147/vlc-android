@@ -35,7 +35,6 @@ import org.videolan.resources.*
 import org.videolan.tools.copy
 import org.videolan.vlc.R
 import org.videolan.vlc.gui.dialogs.CtxActionReceiver
-import org.videolan.vlc.gui.dialogs.RENAME_DIALOG_REQUEST_CODE
 import org.videolan.vlc.gui.dialogs.RenameDialog
 import org.videolan.vlc.gui.dialogs.SavePlaylistDialog
 import org.videolan.vlc.gui.helpers.UiTools
@@ -74,7 +73,7 @@ class StreamsFragmentDelegate : IStreamsFragmentDelegate, CtxActionReceiver {
             CTX_DELETE -> {
                 val media = viewModel.dataset.get(position)
                 viewModel.deletingMedia = media
-                UiTools.snackerWithCancel(fragment.requireView(), fragment.requireActivity().getString(R.string.stream_deleted), Runnable { viewModel.delete() }, Runnable {
+                UiTools.snackerWithCancel(fragment.requireActivity(), fragment.requireActivity().getString(R.string.stream_deleted), { viewModel.delete() }, {
                     viewModel.deletingMedia = null
                     viewModel.refresh()
                 })
@@ -106,7 +105,7 @@ class StreamsFragmentDelegate : IStreamsFragmentDelegate, CtxActionReceiver {
 
     private fun renameStream(position: Int) {
         val dialog = RenameDialog.newInstance(viewModel.dataset.get(position))
-        dialog.setTargetFragment(fragment, RENAME_DIALOG_REQUEST_CODE)
+        dialog.setListener { media, name -> viewModel.rename(media as MediaWrapper, name) }
         dialog.show(fragment.requireActivity().supportFragmentManager, RenameDialog::class.simpleName)
     }
 }

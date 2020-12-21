@@ -35,6 +35,7 @@ import android.widget.CheckBox
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.collection.SimpleArrayMap
+import androidx.core.os.bundleOf
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -127,6 +128,9 @@ class StorageBrowserFragment : FileBrowserFragment(), EntryPointsEventsCb, Brows
         super.onPrepareOptionsMenu(menu)
         menu.findItem(R.id.ml_menu_custom_dir)?.isVisible = true
         menu.findItem(R.id.ml_menu_refresh)?.isVisible = false
+        menu.findItem(R.id.browser_show_all_files)?.isVisible = false
+        menu.findItem(R.id.browser_show_hidden_files)?.isVisible = false
+        menu.findItem(R.id.ml_menu_add_playlist)?.isVisible = false
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -140,10 +144,7 @@ class StorageBrowserFragment : FileBrowserFragment(), EntryPointsEventsCb, Brows
     fun browse(media: MediaWrapper, position: Int, scanned: Boolean) {
         val ft = activity?.supportFragmentManager?.beginTransaction()
         val next = createFragment()
-        val args = Bundle()
-        args.putParcelable(KEY_MEDIA, media)
-        args.putBoolean(KEY_IN_MEDIALIB, scannedDirectory || scanned)
-        next.arguments = args
+        next.arguments = bundleOf(KEY_MEDIA to media, KEY_IN_MEDIALIB to (scannedDirectory || scanned))
         ft?.replace(R.id.fragment_placeholder, next, media.location)
         ft?.addToBackStack(if (isRootDirectory) "root" else if (currentMedia != null) currentMedia?.uri.toString() else mrl!!)
         ft?.commit()
@@ -256,7 +257,7 @@ class StorageBrowserFragment : FileBrowserFragment(), EntryPointsEventsCb, Brows
             val path = input.text.toString().trim { it <= ' ' }
             val f = File(path)
             if (!f.exists() || !f.isDirectory) {
-                UiTools.snacker(view!!, getString(R.string.directorynotfound, path))
+                UiTools.snacker(requireActivity(), getString(R.string.directorynotfound, path))
                 return@OnClickListener
             }
 

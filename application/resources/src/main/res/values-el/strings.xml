@@ -119,8 +119,6 @@
     <string name="firstsong">Πρώτο τραγούδι στην λίστα αναπαραγωγής</string>
     <string name="lastsong">Τελευταίο τραγούδι στην λίστα αναπαραγωγής</string>
 
-    <string name="locked">Κλειδωμένο</string>
-    <string name="unlocked">Ξεκλείδωτο</string>
     <string name="surface_best_fit">Καλύτερο ταίριασμα</string>
     <string name="surface_fit_screen">Προσαρμογή οθόνης</string>
     <string name="surface_fill">Γέμισμα</string>
@@ -140,9 +138,6 @@
     <string name="brightness">Φωτεινότητα</string>
     <string name="advanced">επιλογές για προχωρημένους</string>
     <string name="audio_boost_warning">Σύρετε προς τα πάνω ξανά για να πάτε πάνω από 100%</string>
-    <string name="locked_in_portrait_mode">Κλειδωμένο σε κατακόρυφη περιστροφή\n(Πατήστε το κουμπί παρατεταμένα για ακύρωση)</string>
-    <string name="locked_in_landscape_mode">Κλειδωμένο σε οριζόντια περιστροφή\n(Πατήστε το κουμπί παρατεταμένα για ακύρωση)</string>
-    <string name="reset_orientation">Επαναφορά προσανατολισμού</string>
 
     <plurals name="track_channels_info_quantity">
         <item quantity="one">1 κανάλι\n</item>
@@ -381,14 +376,10 @@
 
     <string name="delete_sub_title">Διαγραφή υπότιτλου</string>
     <string name="delete_sub_message">Θέλετε να διαγράψετε αυτόν τον υπότιτλο;</string>
-    <string name="delete_sub_yes">Ναι</string>
-    <string name="delete_sub_no">Όχι</string>
     <string name="download_subtitle_title">Λήψη Υπότιτλου</string>
 
     <string name="no_result">Δεν βρέθηκαν αποτελέσματα</string>
     <string name="no_internet_connection">Ελέγξτε τη σύνδεση σας στο διαδίκτυο</string>
-    <string name="some_error_occurred">Κάποιο πρόβλημα παρουσιάστηκε. Παρακαλώ προσπαθήστε ξανά αργότερα σε μερικά δευτερόλεπτα.</string>
-
     <string name="network_browsing">Τοπικό Δίκτυο</string>
     <string name="browsing">Περιήγηση</string>
 
@@ -475,7 +466,6 @@
     <string name="ml_external_storage_msg">Θέλετε το VLC να προσθέσει τη συσκευή %1$sστη βιβλιοθήκη μέσων σας;</string>
     <string name="ml_external_storage_accept">Ναι</string>
     <string name="ml_external_storage_decline">Όχι</string>
-    <string name="last_added_media">τελευταία προσθήκη</string>
     <string name="no">Όχι</string>
     <string name="loading_medialibrary">Φόρτωση βιβλιοθήκης μέσων</string>
     <string name="yes">ναι</string>

@@ -30,13 +30,17 @@ import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.edit
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import kotlinx.coroutines.*
 import org.videolan.medialibrary.interfaces.Medialibrary
 import org.videolan.resources.AndroidDevices
+import org.videolan.resources.KEY_AUDIO_LAST_PLAYLIST
+import org.videolan.resources.KEY_MEDIA_LAST_PLAYLIST
 import org.videolan.resources.VLCInstance
+import org.videolan.tools.Settings
 import org.videolan.tools.putSingle
 import org.videolan.vlc.BuildConfig
 import org.videolan.vlc.R
@@ -87,7 +91,10 @@ class PreferencesAdvanced : BasePreferenceFragment(), SharedPreferences.OnShared
                         .setMessage(R.string.validation)
                         .setIcon(R.drawable.ic_warning)
                         .setPositiveButton(R.string.yes) { _, _ ->
-                            lifecycleScope.launch(Dispatchers.IO) { Medialibrary.getInstance().clearHistory() }
+                            lifecycleScope.launch(Dispatchers.IO) {
+                                Medialibrary.getInstance().clearHistory()
+                                Settings.getInstance(requireActivity()).edit().remove(KEY_AUDIO_LAST_PLAYLIST).remove(KEY_MEDIA_LAST_PLAYLIST).apply()
+                            }
                         }
 
                         .setNegativeButton(R.string.cancel, null).show()
@@ -110,7 +117,7 @@ class PreferencesAdvanced : BasePreferenceFragment(), SharedPreferences.OnShared
             }
             "dump_media_db" -> {
                 if (Medialibrary.getInstance().isWorking)
-                    view?.let { UiTools.snacker(it, getString(R.string.settings_ml_block_scan)) }
+                    UiTools.snacker(requireActivity(), getString(R.string.settings_ml_block_scan))
                 else {
                     val dst = File(AndroidDevices.EXTERNAL_PUBLIC_DIRECTORY + Medialibrary.VLC_MEDIA_DB_NAME)
                     lifecycleScope.launch {
@@ -133,35 +140,42 @@ class PreferencesAdvanced : BasePreferenceFragment(), SharedPreferences.OnShared
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String) {
         when (key) {
             "network_caching" -> {
-                val editor = sharedPreferences.edit()
-                try {
-                    editor.putInt("network_caching_value", Integer.parseInt(sharedPreferences.getString(key, "0")!!))
-                } catch (e: NumberFormatException) {
-                    editor.putInt("network_caching_value", 0)
-                    val networkCachingPref = findPreference<EditTextPreference>(key)
-                    networkCachingPref?.text = ""
-                    UiTools.snacker(view!!, R.string.network_caching_popup)
+                sharedPreferences.edit {
+                    try {
+                        putInt("network_caching_value", Integer.parseInt(sharedPreferences.getString(key, "0")!!))
+                    } catch (e: NumberFormatException) {
+                        putInt("network_caching_value", 0)
+                        val networkCachingPref = findPreference<EditTextPreference>(key)
+                        networkCachingPref?.text = ""
+                        UiTools.snacker(requireActivity(), R.string.network_caching_popup)
+                    }
                 }
-                editor.apply()
-                VLCInstance.restart()
-                (activity as? PreferencesActivity)?.restartMediaPlayer()
+                restartLibVLC()
             }
             // No break because need VLCInstance.restart();
             "custom_libvlc_options" -> {
                 try {
                     VLCInstance.restart()
                 } catch (e: IllegalStateException){
-                    view?.let { UiTools.snacker(it, R.string.custom_libvlc_options_invalid) }
+                    UiTools.snacker(requireActivity(), R.string.custom_libvlc_options_invalid)
                     sharedPreferences.putSingle("custom_libvlc_options", "")
                 } finally {
                     (activity as? PreferencesActivity)?.restartMediaPlayer()
                 }
-
+                restartLibVLC()
             }
             "opengl", "chroma_format", "deblocking", "enable_frame_skip", "enable_time_stretching_audio", "enable_verbose_mode" -> {
                 VLCInstance.restart()
                 (activity as? PreferencesActivity)?.restartMediaPlayer()
             }
+            "prefer_smbv1" -> {
+                VLCInstance.restart()
+                UiTools.restartDialog(requireActivity())
+            }
         }
+    }
+    fun restartLibVLC() {
+        VLCInstance.restart()
+        (activity as? PreferencesActivity)?.restartMediaPlayer()
     }
 }

@@ -27,7 +27,6 @@ import android.os.Bundle
 import android.util.SparseArray
 import android.view.*
 import androidx.coordinatorlayout.widget.CoordinatorLayout
-import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import androidx.paging.PagedList
 import androidx.recyclerview.widget.GridLayoutManager
@@ -156,6 +155,7 @@ class AudioBrowserFragment : BaseAudioBrowser<AudioBrowserViewModel>() {
         super.onConfigurationChanged(newConfig)
         val itemSize = RecyclerSectionItemGridDecoration.getItemSize(requireActivity().getScreenWidth(), nbColumns, spacing)
         for (i in 0 until MODE_TOTAL) {
+            if (i >= lists.size || i >= adapters.size) continue
             if (lists[i].layoutManager is GridLayoutManager) {
                 val gridLayoutManager = lists[i].layoutManager as GridLayoutManager
                 gridLayoutManager.spanCount = nbColumns
@@ -192,17 +192,18 @@ class AudioBrowserFragment : BaseAudioBrowser<AudioBrowserViewModel>() {
     private fun setupProvider(index: Int = viewModel.currentTab) {
         val provider = viewModel.providers[index.coerceIn(0, viewModel.providers.size-1)]
         if (provider.loading.hasObservers()) return
-        provider.pagedList.observe(viewLifecycleOwner, Observer { items ->
+        provider.pagedList.observe(viewLifecycleOwner, { items ->
             @Suppress("UNCHECKED_CAST")
-            if (items != null) adapters[index].submitList(items as PagedList<MediaLibraryItem>?)
+            if (items != null) adapters.getOrNull(index)?.submitList(items as PagedList<MediaLibraryItem>?)
             updateEmptyView()
             restorePositions.get(index)?.let {
                 lists[index].scrollToPosition(it)
                 restorePositions.delete(index)
             }
+            setFabPlayShuffleAllVisibility(items.isNotEmpty())
         })
-        provider.loading.observe(viewLifecycleOwner, Observer { loading ->
-            if (loading == null || currentTab != index) return@Observer
+        provider.loading.observe(viewLifecycleOwner, { loading ->
+            if (loading == null || currentTab != index) return@observe
             setRefreshing(loading) { refresh ->
                 if (refresh) updateEmptyView()
                 else {
@@ -211,7 +212,7 @@ class AudioBrowserFragment : BaseAudioBrowser<AudioBrowserViewModel>() {
                 }
             }
         })
-        provider.liveHeaders.observe(viewLifecycleOwner, Observer {
+        provider.liveHeaders.observe(viewLifecycleOwner, {
             lists[currentTab].invalidateItemDecorations()
         })
     }
@@ -254,7 +255,7 @@ class AudioBrowserFragment : BaseAudioBrowser<AudioBrowserViewModel>() {
                 true
             }
             R.id.artists_show_all_title -> {
-                item.isChecked = !Settings.getInstance(requireActivity()).getBoolean(KEY_ARTISTS_SHOW_ALL, true)
+                item.isChecked = !Settings.getInstance(requireActivity()).getBoolean(KEY_ARTISTS_SHOW_ALL, false)
                 Settings.getInstance(requireActivity()).putSingle(KEY_ARTISTS_SHOW_ALL, item.isChecked)
                 viewModel.artistsProvider.showAll = item.isChecked
                 viewModel.refresh()
@@ -272,8 +273,8 @@ class AudioBrowserFragment : BaseAudioBrowser<AudioBrowserViewModel>() {
         MediaUtils.playAll(activity, viewModel.tracksProvider, 0, true)
     }
 
-    private fun setFabPlayShuffleAllVisibility() {
-        setFabPlayVisibility(songsAdapter.itemCount > 2)
+    private fun setFabPlayShuffleAllVisibility(force: Boolean = false) {
+        setFabPlayVisibility(force || songsAdapter.itemCount > 2)
     }
 
     override fun getTitle(): String = getString(R.string.audio)
@@ -282,7 +283,6 @@ class AudioBrowserFragment : BaseAudioBrowser<AudioBrowserViewModel>() {
 
     private fun updateEmptyView() {
         empty_loading.state = if (viewModel.providers[currentTab].loading.value == true && empty) EmptyLoadingState.LOADING else  if (empty) EmptyLoadingState.EMPTY else EmptyLoadingState.NONE
-        setFabPlayShuffleAllVisibility()
     }
 
     override fun onPageSelected(position: Int) {

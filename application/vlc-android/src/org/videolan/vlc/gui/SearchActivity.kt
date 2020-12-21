@@ -1,14 +1,11 @@
 package org.videolan.vlc.gui
 
 import android.app.SearchManager
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
-import android.text.TextUtils
 import android.text.TextWatcher
 import android.view.KeyEvent
-import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowManager
 import android.view.inputmethod.EditorInfo
@@ -32,6 +29,7 @@ open class SearchActivity : BaseActivity(), TextWatcher, TextView.OnEditorAction
     private lateinit var medialibrary: Medialibrary
     private lateinit var binding: SearchActivityBinding
     private val clickHandler = ClickHandler()
+    override fun getSnackAnchorView(): View? = findViewById(android.R.id.content)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,7 +42,7 @@ open class SearchActivity : BaseActivity(), TextWatcher, TextView.OnEditorAction
         if (Intent.ACTION_SEARCH == intent.action || "com.google.android.gms.actions.SEARCH_ACTION" == intent.action) {
             val query = intent.getStringExtra(SearchManager.QUERY)
             initializeLists()
-            if (!TextUtils.isEmpty(query)) {
+            if (!query.isNullOrEmpty()) {
                 window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN)
                 binding.searchEditText.setText(query)
                 binding.searchEditText.setSelection(query.length)
@@ -72,11 +70,10 @@ open class SearchActivity : BaseActivity(), TextWatcher, TextView.OnEditorAction
 
     private fun initializeLists() {
         val count = binding.resultsContainer.childCount
-        val inflater = getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
         for (i in 0 until count) {
             val v = binding.resultsContainer.getChildAt(i)
             if (v is RecyclerView) {
-                v.adapter = SearchResultAdapter(inflater)
+                v.adapter = SearchResultAdapter(layoutInflater)
                 v.layoutManager = LinearLayoutManager(this)
                 (v.adapter as SearchResultAdapter).setClickHandler(clickHandler)
             }

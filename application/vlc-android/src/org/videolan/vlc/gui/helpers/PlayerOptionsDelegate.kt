@@ -16,6 +16,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.ViewStubCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.getSystemService
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
@@ -97,9 +98,7 @@ class PlayerOptionsDelegate(val activity: AppCompatActivity, val service: Playba
         val options = mutableListOf<PlayerOption>()
         if (video) options.add(PlayerOption(ID_LOCK_PLAYER, R.attr.ic_lock_player, res.getString(R.string.lock)))
         options.add(PlayerOption(ID_SLEEP, R.attr.ic_sleep_normal_style, res.getString(R.string.sleep_title)))
-        if (service.isSeekable) {
-            options.add(PlayerOption(ID_PLAYBACK_SPEED, R.attr.ic_speed_normal_style, res.getString(R.string.playback_speed)))
-        }
+        options.add(PlayerOption(ID_PLAYBACK_SPEED, R.attr.ic_speed_normal_style, res.getString(R.string.playback_speed)))
         options.add(PlayerOption(ID_JUMP_TO, R.attr.ic_jumpto_normal_style, res.getString(R.string.jump_to_time)))
         options.add(PlayerOption(ID_EQUALIZER, R.attr.ic_equalizer_normal_style, res.getString(R.string.equalizer)))
         if (video) {
@@ -110,10 +109,10 @@ class PlayerOptionsDelegate(val activity: AppCompatActivity, val service: Playba
             if (primary)
                 options.add(PlayerOption(ID_REPEAT, R.drawable.ic_repeat, res.getString(R.string.repeat_title)))
             if (service.canShuffle()) options.add(PlayerOption(ID_SHUFFLE, R.drawable.ic_shuffle, res.getString(R.string.shuffle_title)))
-            val chaptersCount = service.getChapters(-1)?.size ?: 0
-            if (chaptersCount > 1) options.add(PlayerOption(ID_CHAPTER_TITLE, R.attr.ic_chapter_normal_style, res.getString(R.string.go_to_chapter)))
             options.add(PlayerOption(ID_VIDEO_STATS, R.attr.ic_video_stats, res.getString(R.string.video_information)))
         }
+        val chaptersCount = service.getChapters(-1)?.size ?: 0
+        if (chaptersCount > 1) options.add(PlayerOption(ID_CHAPTER_TITLE, R.attr.ic_chapter_normal_style, res.getString(R.string.go_to_chapter)))
         options.add(PlayerOption(ID_ABREPEAT, R.attr.ic_abrepeat, res.getString(R.string.ab_repeat)))
         options.add(PlayerOption(ID_SAVE_PLAYLIST, R.attr.ic_save, res.getString(R.string.playlist_save)))
         if (service.playlistManager.player.canDoPassthrough() && settings.getString("aout", "0") == "0")
@@ -215,7 +214,7 @@ class PlayerOptionsDelegate(val activity: AppCompatActivity, val service: Playba
             else -> return
         }
         if (newFragment is VLCBottomSheetDialogFragment && activity is VideoPlayerActivity)
-            newFragment.onDismissListener = DialogInterface.OnDismissListener { activity.dimStatusBar(true) }
+            newFragment.onDismissListener = DialogInterface.OnDismissListener { activity.overlayDelegate.dimStatusBar(true) }
         newFragment.show(activity.supportFragmentManager, tag)
         hide()
     }
@@ -308,7 +307,7 @@ class PlayerOptionsDelegate(val activity: AppCompatActivity, val service: Playba
             binding.optionTitle.text = null
             binding.optionIcon.setImageResource(UiTools.getResourceFromAttribute(activity, R.attr.ic_audiodelay))
         } else {
-            binding.optionTitle.text = String.format("%s ms", java.lang.Long.toString(audiodelay))
+            binding.optionTitle.text = String.format("%s ms", audiodelay.toString())
             binding.optionIcon.setImageResource(R.drawable.ic_audiodelay_on)
         }
     }
@@ -319,7 +318,7 @@ class PlayerOptionsDelegate(val activity: AppCompatActivity, val service: Playba
             binding.optionTitle.text = null
             binding.optionIcon.setImageResource(UiTools.getResourceFromAttribute(activity, R.attr.ic_subtitledelay))
         } else {
-            binding.optionTitle.text = String.format("%s ms", java.lang.Long.toString(spudelay))
+            binding.optionTitle.text = String.format("%s ms", spudelay.toString())
             binding.optionIcon.setImageResource(R.drawable.ic_subtitledelay_on)
         }
     }
@@ -390,7 +389,7 @@ class PlayerOptionsDelegate(val activity: AppCompatActivity, val service: Playba
 }
 
 fun Context.setSleep(time: Calendar?) {
-    val alarmMgr = applicationContext.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+    val alarmMgr = applicationContext.getSystemService<AlarmManager>()!!
     val intent = Intent(SLEEP_INTENT)
     val sleepPendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
 

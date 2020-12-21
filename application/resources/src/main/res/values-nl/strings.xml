@@ -127,8 +127,6 @@
     <string name="firstsong">Eerste nummer van de afspeellijst</string>
     <string name="lastsong">Laatste nummer van de afspeellijst</string>
 
-    <string name="locked">Geblokkeerd</string>
-    <string name="unlocked">Gedeblokkeerd</string>
     <string name="surface_best_fit">Best passend</string>
     <string name="surface_fit_screen">Passend op scherm</string>
     <string name="surface_fill">Schermvullend</string>
@@ -148,9 +146,6 @@
     <string name="brightness">Helderheid</string>
     <string name="advanced">geavanceerde opties</string>
     <string name="audio_boost_warning">Nogmaals omhoog slepen om boven 100 % te gaan</string>
-    <string name="locked_in_portrait_mode">Vergrendeld in staande modus\n(Lang drukken op knop om te annuleren)</string>
-    <string name="locked_in_landscape_mode">Vergrendeld in liggende modus\n(Lang drukken op knop om te annuleren)</string>
-    <string name="reset_orientation">Oriëntatie herstellen</string>
 
     <plurals name="track_channels_info_quantity">
         <item quantity="one">1 kanaal\n</item>
@@ -413,13 +408,11 @@
 
     <string name="delete_sub_title">Ondertitel verwijderen</string>
     <string name="delete_sub_message">Wilt u deze ondertitel verwijderen?</string>
-    <string name="delete_sub_yes">Ja</string>
-    <string name="delete_sub_no">Nee</string>
     <string name="download_subtitle_title">Ondertitel downloaden</string>
 
     <string name="no_result">Geen resultaten gevonden</string>
     <string name="no_internet_connection">Controleer uw internetverbinding</string>
-    <string name="some_error_occurred">Er trad een fout op. Probeer het binnen enkele seconden opnieuw</string>
+    <string name="subs_download_error">Dienst niet beschikbaar. Probeer het later opnieuw</string>
 
     <string name="network_browsing">Lokaal netwerk</string>
     <string name="browsing">Bladeren</string>
@@ -509,7 +502,9 @@
     <string name="ml_external_storage_msg">Wilt u dat VLC apparaat %1$s aan uw mediabibliotheek toevoegt?</string>
     <string name="ml_external_storage_accept">Ja</string>
     <string name="ml_external_storage_decline">Nee</string>
-    <string name="last_added_media">laatst toegevoegd</string>
+    <string name="auto_last_added_media">Laatst toegevoegd</string>
+    <string name="auto_my_library">Mijn bibliotheek</string>
+    <string name="auto_home">Home</string>
     <string name="no">Nee</string>
     <string name="loading_medialibrary">Mediabibliotheek laden…</string>
     <string name="yes">Ja</string>
@@ -716,4 +711,54 @@
     <string name="group_similar">Automatisch hergroeperen</string>
     <string name="no_favorite">Geen favoriet</string>
     <string name="empty_directory">Leeg</string>
+    <string name="no_track">Geen track</string>
+
+    <string name="swipe_unlock">Vegen om te ontgrendelen</string>
+    <string name="swipe_unlock_no_touch">Lang drukken om te ontgrendelen</string>
+    <string name="sub_result_by_name">Resultaten voor %s</string>
+    <string name="sub_result_by_name_season">Seizoen %s</string>
+    <string name="sub_result_by_name_episode">Aflevering %s</string>
+
+    <string name="sub_result_by_file">Resultaten voor uw bestand</string>
+    <string name="donate">VLC helpen</string>
+    <string name="donate_desc">Ondersteun de vrijwilligers die VLC maken</string>
+    <string name="donate_subscribtion">Ik wil dat dit een maandelijkse sponsoring wordt</string>
+    <string name="donate_send">Uw sponsoring starten</string>
+    <string name="donation_description">Uw sponsoring zal ons toelaten om:\nde VLC-app voor Android te verbeteren\nde VideoLAN-associatie te ondersteunen</string>
+    <string name="subscription_purchased">U bent ingeschreven op een maandelijkse sponsoring</string>
+    <string name="subscription_cancel">U kunt zich afmelden in de Play Store</string>
+    <string name="subscription_cancel_tv">Hoe af te melden</string>
+    <string name="donate_unsubscribe_tv">Om zich af te melden, opent u %s op een telefoon of computer of scant u deze code:</string>
+    <string name="tip_jar">VLC helpen</string>
+    <string name="thank_you">Bedankt</string>
+    <string name="thank_you_desc">Bedankt voor uw sponsoring!\nZe zal ons veel helpen bij het verbeteren van VLC!</string>
+    <string name="donate_again">De app opnieuw sponsoren</string>
+
+    <string name="mark_as_played">Markeren als afgespeeld</string>
+    <string name="mark_all_as_played">Alles markeren als afgespeeld</string>
+    <string name="new_group">Nieuwe groep</string>
+    <string name="new_group_desc">Nieuwe groep aanmaken</string>
+
+    <string name="air_action_rewind">10 sec terug</string>
+    <string name="air_action_forward">10 sec vooruit</string>
+    <string name="air_action_play_pause">Afspelen pauzeren/hervatten</string>
+    <string name="air_action_volume_up">Volume omhoog</string>
+    <string name="air_action_volume_down">Volume omlaag</string>
+    <string name="air_action_next">Volgend item in het afspelen</string>
+    <string name="air_action_previous">Vorig item in het afspelen</string>
+    <string name="allow_otg">OTG-toegang toestaan</string>
+    <string name="allow_otg_description">Selecteer uw OTG-schijf om toegang te verlenen aan VLC.</string>
+    <string name="timeout_infinite">Oneindig</string>
+    <string name="timeout_short">Kort</string>
+    <string name="timeout_normal">Normaal</string>
+    <string name="timeout_long">Lang</string>
+    <string name="video_hud_timeout">Vertraging voor verbergen van videospeler-bediening</string>
+    <string name="remove_from_history">Verwijderen uit geschiedenis</string>
+    <string name="prefersmbv1">Voorkeur voor SMB 1</string>
+    <string name="prefersmbv1_summary">Vink deze instelling uit als u problemen ondervindt bij het bladeren op uw SMB-server.</string>
+    <string name="apply_to_all">Toepassen op alle video\'s</string>
+    <string name="audio_delay_global">Audiovertraging ingesteld op %s ms voor alle video\'s</string>
+    <string name="warning_stream_speed">Verhogen van de afspeelsnelheid boven 1 voor streams kan leiden tot haperingen</string>
+    <string name="go_to_folder">Bladeren in bovenliggende map</string>
+
 </resources>

@@ -21,11 +21,12 @@
 package org.videolan.vlc.gui.audio
 
 import android.Manifest
-import android.content.Context
+import android.app.Activity
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.os.Handler
+import android.os.Vibrator
 import android.support.v4.media.session.PlaybackStateCompat
 import android.text.Editable
 import android.text.TextWatcher
@@ -39,8 +40,8 @@ import android.widget.SeekBar
 import android.widget.SeekBar.OnSeekBarChangeListener
 import androidx.annotation.RequiresPermission
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.getSystemService
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Observer
 import androidx.lifecycle.asFlow
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.ItemTouchHelper
@@ -110,7 +111,7 @@ class AudioPlayer : Fragment(), PlaylistAdapter.IPlayer, TextWatcher, IAudioPlay
         playlistAdapter = PlaylistAdapter(this)
         settings = Settings.getInstance(requireContext())
         playlistModel = PlaylistModel.get(this)
-        playlistModel.progress.observe(this@AudioPlayer, Observer { it?.let { updateProgress(it) } })
+        playlistModel.progress.observe(this@AudioPlayer, { it?.let { updateProgress(it) } })
         playlistAdapter.setModel(playlistModel)
         playlistModel.dataset.asFlow().conflate().onEach {
             doUpdate()
@@ -159,15 +160,16 @@ class AudioPlayer : Fragment(), PlaylistAdapter.IPlayer, TextWatcher, IAudioPlay
         pauseToPlaySmall = AnimatedVectorDrawableCompat.create(requireActivity(), R.drawable.anim_pause_play)!!
         onSlide(0f)
         abRepeatAddMarker = binding.abRepeatContainer.findViewById<Button>(R.id.ab_repeat_add_marker)
-        playlistModel.service?.playlistManager?.abRepeat?.observe(viewLifecycleOwner, Observer { abvalues ->
+        playlistModel.service?.playlistManager?.abRepeat?.observe(viewLifecycleOwner, { abvalues ->
             binding.abRepeatA = if (abvalues.start == -1L) -1F else abvalues.start / playlistModel.service!!.playlistManager.player.getLength().toFloat()
             binding.abRepeatB = if (abvalues.stop == -1L) -1F else abvalues.stop / playlistModel.service!!.playlistManager.player.getLength().toFloat()
             binding.abRepeatMarkerA.visibility = if (abvalues.start == -1L) View.GONE else View.VISIBLE
             binding.abRepeatMarkerB.visibility = if (abvalues.stop == -1L) View.GONE else View.VISIBLE
             playlistModel.service?.manageAbRepeatStep(binding.abRepeatReset, binding.abRepeatStop, binding.abRepeatContainer, abRepeatAddMarker)
         })
-        playlistModel.service?.playlistManager?.abRepeatOn?.observe(viewLifecycleOwner, Observer {
+        playlistModel.service?.playlistManager?.abRepeatOn?.observe(viewLifecycleOwner, {
             binding.abRepeatMarkerGuidelineContainer.visibility = if (it) View.VISIBLE else View.GONE
+            abRepeatAddMarker.visibility = if (it) View.VISIBLE else View.GONE
 
             playlistModel.service?.manageAbRepeatStep(binding.abRepeatReset, binding.abRepeatStop, binding.abRepeatContainer, abRepeatAddMarker)
         })
@@ -202,7 +204,7 @@ class AudioPlayer : Fragment(), PlaylistAdapter.IPlayer, TextWatcher, IAudioPlay
                     val mw = playlistAdapter.getItem(position)
                     val cancelAction = Runnable { playlistModel.insertMedia(position, mw) }
                     val message = String.format(getString(R.string.remove_playlist_item), mw.title)
-                    UiTools.snackerWithCancel(it, message, null, cancelAction)
+                    UiTools.snackerWithCancel(requireActivity(), message, null, cancelAction)
                     playlistModel.remove(position)
                 }
                 CTX_STOP_AFTER_THIS -> playlistModel.stopAfter(position)
@@ -309,16 +311,15 @@ class AudioPlayer : Fragment(), PlaylistAdapter.IPlayer, TextWatcher, IAudioPlay
             val text = withContext(Dispatchers.Default) {
                 val medias = playlistModel.medias ?: return@withContext ""
                 if (playlistModel.currentMediaPosition == -1) return@withContext ""
-                val elapsedTracksTime = medias.asSequence()
-                        .take(playlistModel.currentMediaPosition)
-                        .map { it.length }
-                        .sum()
+                val elapsedTracksTime = playlistModel.previousTotalTime ?: return@withContext ""
                 val totalTime = elapsedTracksTime + progress.time
-                val currentProgressText = if (totalTime == 0L) "0s" else Tools.millisToString(totalTime, true, false, false)
+                val totalTimeText = Tools.millisToString(totalTime, true, false, false)
+                val currentProgressText = if (totalTimeText.isNullOrEmpty()) "0s" else totalTimeText
 
                 val textTrack = getString(R.string.track_index, "${playlistModel.currentMediaPosition + 1} / ${medias.size}")
-                val textProgress = getString(R.string.audio_queue_progress, "$currentProgressText / ${playlistModel.totalTime}")
-                "$textTrack • $textProgress"
+                val textProgress = getString(R.string.audio_queue_progress,
+                        if (playlistModel.totalTime.isNullOrEmpty()) "$currentProgressText" else "$currentProgressText / ${playlistModel.totalTime}")
+                "$textTrack  •  $textProgress"
             }
             binding.audioPlayProgress.text = text
         }
@@ -350,11 +351,11 @@ class AudioPlayer : Fragment(), PlaylistAdapter.IPlayer, TextWatcher, IAudioPlay
     }
 
     fun onNextClick(view: View) {
-        if (!playlistModel.next()) activity?.window?.decorView?.let { UiTools.snacker(it, R.string.lastsong) }
+        if (!playlistModel.next()) UiTools.snacker(requireActivity(), R.string.lastsong)
     }
 
     fun onPreviousClick(view: View) {
-        if (!playlistModel.previous()) activity?.window?.decorView?.let { UiTools.snacker(it,  R.string.firstsong) }
+        if (!playlistModel.previous()) UiTools.snacker(requireActivity(),  R.string.firstsong)
     }
 
     fun onRepeatClick(view: View) {
@@ -402,7 +403,7 @@ class AudioPlayer : Fragment(), PlaylistAdapter.IPlayer, TextWatcher, IAudioPlay
         manageSearchVisibilities(true)
         binding.playlistSearchText.editText?.requestFocus()
         if (isShowingCover()) onPlaylistSwitchClick(binding.playlistSwitch)
-        val imm = v.context.applicationContext.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        val imm = v.context.applicationContext.getSystemService<InputMethodManager>()!!
         imm.showSoftInput(binding.playlistSearchText.editText, InputMethodManager.SHOW_IMPLICIT)
         handler.postDelayed(hideSearchRunnable, SEARCH_TIMEOUT_MILLIS)
     }
@@ -470,8 +471,7 @@ class AudioPlayer : Fragment(), PlaylistAdapter.IPlayer, TextWatcher, IAudioPlay
         internal var seekRunnable: Runnable = object : Runnable {
             override fun run() {
                 if (!vibrated) {
-                    (AppContextProvider.appContext.getSystemService(Context.VIBRATOR_SERVICE) as android.os.Vibrator)
-                            .vibrate(80)
+                    AppContextProvider.appContext.getSystemService<Vibrator>()?.vibrate(80)
                     vibrated = true
                 }
 
@@ -582,7 +582,7 @@ class AudioPlayer : Fragment(), PlaylistAdapter.IPlayer, TextWatcher, IAudioPlay
             val trackInfo = playlistModel.title ?: return
 
             requireActivity().copy("VLC - song name", trackInfo)
-            activity?.window?.decorView?.let { UiTools.snacker(it, R.string.track_info_copied_to_clipboard) }
+            UiTools.snacker(requireActivity(), R.string.track_info_copied_to_clipboard)
         }
 
         override fun onTouchDown() {}

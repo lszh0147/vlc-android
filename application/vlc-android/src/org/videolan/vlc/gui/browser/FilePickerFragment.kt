@@ -27,11 +27,14 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.text.TextUtils
 import android.view.View
+import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.ViewModelProviders
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.ObsoleteCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.videolan.medialibrary.MLServiceLocator
 import org.videolan.medialibrary.interfaces.media.MediaWrapper
@@ -47,6 +50,8 @@ import org.videolan.vlc.viewmodels.browser.TYPE_PICKER
 
 const val EXTRA_MRL = "sub_mrl"
 
+@ExperimentalCoroutinesApi
+@ObsoleteCoroutinesApi
 class FilePickerFragment : FileBrowserFragment(), BrowserContainer<MediaLibraryItem> {
 
     override fun createFragment(): Fragment {
@@ -54,10 +59,11 @@ class FilePickerFragment : FileBrowserFragment(), BrowserContainer<MediaLibraryI
     }
 
     override fun onCreate(bundle: Bundle?) {
-        val uri = activity?.intent?.data
-        if (uri == null || uri.scheme == "http" || uri.scheme == "content" || uri.scheme == "fd") {
-            activity?.intent = null
-        }
+       requireActivity().intent?.getParcelableExtra<MediaWrapper>(KEY_MEDIA)?.let {media ->
+           if (media.uri == null || media.uri.scheme == "http" || media.uri.scheme == "content" || media.uri.scheme == "fd") {
+               activity?.intent = null
+           }
+       }
         super.onCreate(bundle)
         adapter = FilePickerAdapter(this)
     }
@@ -86,6 +92,21 @@ class FilePickerFragment : FileBrowserFragment(), BrowserContainer<MediaLibraryI
 
     }
 
+    override fun backTo(tag: String) {
+        if (tag == "root") {
+            val supportFragmentManager = requireActivity().supportFragmentManager
+            for (i in 0 until supportFragmentManager.backStackEntryCount) {
+                supportFragmentManager.popBackStack(tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+            }
+            viewModel.setDestination(MLServiceLocator.getAbstractMediaWrapper(tag.toUri()))
+            supportFragmentManager.beginTransaction().detach(this).attach(this).commit()
+            return
+        }
+        super.backTo(tag)
+    }
+
+    override fun onImageClick(v: View, position: Int, item: MediaLibraryItem) {}
+
     private fun pickFile(mw: MediaWrapper) {
         val i = Intent(Intent.ACTION_PICK)
         i.putExtra(EXTRA_MRL, mw.location)
@@ -96,13 +117,13 @@ class FilePickerFragment : FileBrowserFragment(), BrowserContainer<MediaLibraryI
     fun browseUp() {
         when {
             isRootDirectory -> requireActivity().finish()
-            TextUtils.equals(mrl?.removeFileProtocole(), AndroidDevices.EXTERNAL_PUBLIC_DIRECTORY) -> {
+            mrl?.removeFileProtocole() == AndroidDevices.EXTERNAL_PUBLIC_DIRECTORY -> {
                 mrl = null
                 isRootDirectory = true
                 viewModel.refresh()
             }
             mrl != null -> {
-                val mw = MLServiceLocator.getAbstractMediaWrapper(Uri.parse(FileUtils.getParent(mrl)))
+                val mw = MLServiceLocator.getAbstractMediaWrapper(FileUtils.getParent(mrl)?.toUri())
                 browse(mw, false)
             }
         }

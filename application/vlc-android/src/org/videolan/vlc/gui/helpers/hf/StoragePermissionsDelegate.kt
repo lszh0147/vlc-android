@@ -31,6 +31,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.viewModels
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
@@ -131,11 +132,11 @@ class StoragePermissionsDelegate : BaseHeadlessFragment() {
         suspend fun FragmentActivity.getStoragePermission(write: Boolean = false) : Boolean {
             if (isFinishing) return false
             val model : PermissionViewmodel by viewModels()
-            if (model.isCompleted) return model.deferredGrant.getCompleted()
+            if (model.isCompleted && storageAccessGranted.value == true) return model.deferredGrant.getCompleted()
             if (!model.permissionPending) {
                 model.setupDeferred()
                 val fragment = StoragePermissionsDelegate().apply {
-                    arguments = Bundle(1).apply { putBoolean("write", write) }
+                    arguments = bundleOf("write" to write)
                 }
                 supportFragmentManager.beginTransaction().add(fragment, TAG).commitAllowingStateLoss()
             } else if (model.permissionRationale) {

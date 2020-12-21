@@ -22,7 +22,9 @@ package org.videolan.vlc.providers
 
 import android.content.Context
 import android.net.Uri
-import android.text.TextUtils
+import androidx.core.net.toUri
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.ObsoleteCoroutinesApi
 import org.videolan.libvlc.interfaces.IMedia
 import org.videolan.medialibrary.media.MediaLibraryItem
 import org.videolan.medialibrary.media.Storage
@@ -33,6 +35,8 @@ import org.videolan.vlc.repository.DirectoryRepository
 import java.io.File
 import java.util.*
 
+@ExperimentalCoroutinesApi
+@ObsoleteCoroutinesApi
 class StorageProvider(context: Context, dataset: LiveDataset<MediaLibraryItem>, url: String?, showHiddenFiles: Boolean): FileBrowserProvider(context, dataset, url, false, showHiddenFiles) {
 
     override suspend fun browseRootImpl() {
@@ -42,18 +46,18 @@ class StorageProvider(context: Context, dataset: LiveDataset<MediaLibraryItem>, 
         val storagesList = ArrayList<MediaLibraryItem>()
         for (mediaDirLocation in storages) {
             if (!File(mediaDirLocation).exists()) continue
-            if (TextUtils.isEmpty(mediaDirLocation)) continue
+            if (mediaDirLocation.isEmpty()) continue
             storage = Storage(Uri.fromFile(File(mediaDirLocation)))
-            if (TextUtils.equals(AndroidDevices.EXTERNAL_PUBLIC_DIRECTORY, mediaDirLocation))
+            if (AndroidDevices.EXTERNAL_PUBLIC_DIRECTORY == mediaDirLocation)
                 storage.name = context.getString(R.string.internal_memory)
             storagesList.add(storage)
         }
         customLoop@ for (customDir in customDirectories) {
             for (mediaDirLocation in storages) {
-                if (TextUtils.isEmpty(mediaDirLocation)) continue
+                if (mediaDirLocation.isEmpty()) continue
                 if (customDir.path.startsWith(mediaDirLocation)) continue@customLoop
             }
-            storage = Storage(Uri.parse(customDir.path))
+            storage = Storage(customDir.path.toUri())
             storagesList.add(storage)
         }
         dataset.value = storagesList

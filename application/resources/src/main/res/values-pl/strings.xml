@@ -143,8 +143,6 @@
     <string name="firstsong">Pierwszy utwór z listy odtwarzania</string>
     <string name="lastsong">Ostatni utwór z listy odtwarzania</string>
 
-    <string name="locked">zablokowane</string>
-    <string name="unlocked">odblokowane</string>
     <string name="surface_best_fit">Najlepsze dopasowanie</string>
     <string name="surface_fit_screen">Dopasuj ekran</string>
     <string name="surface_fill">Wypełnij</string>
@@ -164,9 +162,6 @@
     <string name="brightness">Jasność</string>
     <string name="advanced">zaawansowane opcje</string>
     <string name="audio_boost_warning">Przesuń ponownie, aby przekroczyć 100%</string>
-    <string name="locked_in_portrait_mode">Zablokowany w trybie portretowym\n(Długie naciśnięcie przycisku odblokuje)</string>
-    <string name="locked_in_landscape_mode">Zablokowany w trybie krajobrazowym\n(Długie naciśnięcie przycisku odblokuje)</string>
-    <string name="reset_orientation">Resetowanie orientacji</string>
 
     <plurals name="track_channels_info_quantity">
         <item quantity="one">1 kanał\n</item>
@@ -431,13 +426,11 @@
 
     <string name="delete_sub_title">Usuń napisy</string>
     <string name="delete_sub_message">Czy chcesz usunąć te napisy?</string>
-    <string name="delete_sub_yes">Tak</string>
-    <string name="delete_sub_no">Nie</string>
     <string name="download_subtitle_title">Pobierz napisy</string>
 
     <string name="no_result">Nie znaleziono wyników</string>
     <string name="no_internet_connection">Sprawdź swoje połączenie internetowe</string>
-    <string name="some_error_occurred">Wystąpił błąd. Spróbuj ponownie za kilka sekund.</string>
+    <string name="subs_download_error">Serwis niedostępny, spróbuj ponownie później</string>
 
     <string name="network_browsing">Sieć lokalna</string>
     <string name="browsing">Przeglądanie</string>
@@ -514,20 +507,22 @@
     <string name="save_bluetooth_delay">zapisz opóźnienie urządzenia bluetooth</string>
     <string name="episodes">epizody</string>
     <string name="movies">filmy</string>
-    <string name="videos">klipy wideo</string>
-    <string name="videos_all">Wszystkie klipy wideo</string>
+    <string name="videos">filmy</string>
+    <string name="videos_all">Wszystkie filmy</string>
     <string name="clear_playback_history">Wyczyść historię odtwarzania</string>
     <string name="ml_scanning">Wyszukiwanie plików multimedialnych</string>
     <string name="ml_parse_media">Parsowanie mediów</string>
     <string name="ml_discovering">Odnalezienie</string>
     <string name="resume">Wznów</string>
     <string name="length">Długość</string>
-    <string name="tv_settings_hint">Długo naciśnij przycisk OK, aby zaznaczyć/odznaczyć katalogi</string>
+    <string name="tv_settings_hint">Naciśnij długo przycisk OK, aby zaznaczyć/odznaczyć katalogi</string>
     <string name="ml_external_storage_title">Wykryto nową pamięć zewnętrzną</string>
     <string name="ml_external_storage_msg">Czy chcesz, by VLC dodał urządzenie %1$s do biblioteki mediów?</string>
     <string name="ml_external_storage_accept">Tak</string>
     <string name="ml_external_storage_decline">Nie</string>
-    <string name="last_added_media">ostatnio dodane</string>
+    <string name="auto_last_added_media">Ostatnio dodane</string>
+    <string name="auto_my_library">Moja Biblioteka</string>
+    <string name="auto_home">Strona główna</string>
     <string name="no">Nie</string>
     <string name="loading_medialibrary">Ładowanie biblioteki mediów…</string>
     <string name="yes">Tak</string>
@@ -738,4 +733,54 @@
     <string name="group_similar">Przegrupuj automatycznie</string>
     <string name="no_favorite">Brak ulubionych</string>
     <string name="empty_directory">Pusty</string>
+    <string name="no_track">Brak utworów</string>
+
+    <string name="swipe_unlock">Przeciągnij, aby odblokować</string>
+    <string name="swipe_unlock_no_touch">Naciśnij długo, aby odblokować</string>
+    <string name="sub_result_by_name">Wyniki dla %s</string>
+    <string name="sub_result_by_name_season">Sezon %s</string>
+    <string name="sub_result_by_name_episode">Epizod %s</string>
+
+    <string name="sub_result_by_file">Wyniki dla Twojego pliku</string>
+    <string name="donate">Pomóż VLC</string>
+    <string name="donate_desc">Wspieraj wolontariuszy tworzących VLC</string>
+    <string name="donate_subscribtion">Chciał(a)bym, żeby był to miesięczny sponsoring</string>
+    <string name="donate_send">Rozpocznij sponsorowanie</string>
+    <string name="donation_description">Twoje sponsorowanie pozwoli nam:\nUlepszyć aplikację VLC na Androida\nWspierać Stowarzyszenie VideoLAN</string>
+    <string name="subscription_purchased">Jesteś subskrybentem miesięcznego sponsorowania</string>
+    <string name="subscription_cancel">Możesz zrezygnować z subskrypcji w Sklepie Play</string>
+    <string name="subscription_cancel_tv">Jak zrezygnować z subskrypcji</string>
+    <string name="donate_unsubscribe_tv">Aby anulować subskrypcję, otwórz %s na telefonie lub komputerze albo zeskanuj ten kod:</string>
+    <string name="tip_jar">Pomóż VLC</string>
+    <string name="thank_you">Dziękujemy</string>
+    <string name="thank_you_desc">Dziękujemy za wsparcie!\nPomoże nam to w ulepszaniu VLC!</string>
+    <string name="donate_again">Ponownie zasponsoruj aplikację</string>
+
+    <string name="mark_as_played">Oznacz jako odtwarzany</string>
+    <string name="mark_all_as_played">Oznacz wszystkie jako odtwarzane</string>
+    <string name="new_group">Nowa grupa</string>
+    <string name="new_group_desc">Utwórz nową grupę</string>
+
+    <string name="air_action_rewind">Cofnij 10 sek</string>
+    <string name="air_action_forward">Przewiń 10 sek</string>
+    <string name="air_action_play_pause">Wstrzymaj/wznów odtwarzanie</string>
+    <string name="air_action_volume_up">Głośniej</string>
+    <string name="air_action_volume_down">Ciszej</string>
+    <string name="air_action_next">Poprzedni element w odtwarzaniu</string>
+    <string name="air_action_previous">Następny element w odtwarzaniu</string>
+    <string name="allow_otg">Zezwól na dostęp do OTG</string>
+    <string name="allow_otg_description">Wybierz swój dysk OTG, aby umożliwić dostęp do VLC</string>
+    <string name="timeout_infinite">Nieskończoność</string>
+    <string name="timeout_short">Krótko</string>
+    <string name="timeout_normal">Normalnie</string>
+    <string name="timeout_long">Długo</string>
+    <string name="video_hud_timeout">Opóźnienie ukrywania kontroli odtwarzacza wideo</string>
+    <string name="remove_from_history">Usuń z historii</string>
+    <string name="prefersmbv1">Preferuj SMB 1</string>
+    <string name="prefersmbv1_summary">Wyłącz to ustawienie, jeśli masz problemy z przeglądaniem serwera SMB</string>
+    <string name="apply_to_all">Zastosuj do wszystkich filmów</string>
+    <string name="audio_delay_global">Opóźnienie dźwięku ustawione na %s ms dla wszystkich filmów</string>
+    <string name="warning_stream_speed">Zwiększenie prędkości odtwarzania strumieni powyżej 1 może powodować zacinanie się</string>
+    <string name="go_to_folder">Przeglądaj katalog nadrzędny</string>
+
 </resources>

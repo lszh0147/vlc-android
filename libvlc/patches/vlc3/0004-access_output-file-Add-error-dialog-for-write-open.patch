@@ -1,20 +1,26 @@
-From f1bcdad49eb0da544ec0d4899c302e00c0804cf9 Mon Sep 17 00:00:00 2001
-Message-Id: <f1bcdad49eb0da544ec0d4899c302e00c0804cf9.1571382591.git.thomas@gllm.fr>
-In-Reply-To: <253998cefd559e3e1103788d6a6c7466ec5f1faa.1571382591.git.thomas@gllm.fr>
-References: <253998cefd559e3e1103788d6a6c7466ec5f1faa.1571382591.git.thomas@gllm.fr>
+From 6e9429547d0dedb20be479361f6e67e9b312d858 Mon Sep 17 00:00:00 2001
+Message-Id: <6e9429547d0dedb20be479361f6e67e9b312d858.1607001652.git.nicolas@videolabs.io>
+In-Reply-To: <7505e758ab3f173e530063cea6a221862fb83ab2.1607001652.git.nicolas@videolabs.io>
+References: <7505e758ab3f173e530063cea6a221862fb83ab2.1607001652.git.nicolas@videolabs.io>
 From: Soomin Lee <bubu@mikan.io>
 Date: Mon, 1 Oct 2018 15:37:57 +0200
-Subject: [PATCH 4/5] access_output: file: Add error dialog for write/open
+Subject: [PATCH 04/10] access_output: file: Add error dialog for write/open
 
+Message-Id: <b95a09a0bb9cb649ab7c8f0ac0034013dad55247.1593695247.git.thomas@gllm.fr>
+Message-Id: <edf369375dd3937286034267c8a614f188fb51e4.1599040437.git.nicolas@videolabs.io>
+Message-Id: <026f2ef961331f72fd0af03f9b9c3d1ada75fb33.1601374253.git.nicolas@videolabs.io>
+Message-Id: <984debbf7eacda34961ef17de089011f36be5cb5.1602659942.git.nicolas@videolabs.io>
+Message-Id: <bbe05da9d5f466b3b41b46407342f6a2ef59f0a9.1605192544.git.nicolas@videolabs.io>
+Message-Id: <d826d9929b5bb41537bddafe48eb54529f5bd8e1.1605701951.git.nicolas@videolabs.io>
 ---
  modules/access_output/file.c | 8 ++++++++
  1 file changed, 8 insertions(+)
 
 diff --git a/modules/access_output/file.c b/modules/access_output/file.c
-index fbefce0be8..45de0fc75e 100644
+index ef4f2d18d1..55e4822b90 100644
 --- a/modules/access_output/file.c
 +++ b/modules/access_output/file.c
-@@ -88,6 +88,9 @@ static ssize_t Write( sout_access_out_t *p_access, block_t *p_buffer )
+@@ -87,6 +87,9 @@ static ssize_t Write( sout_access_out_t *p_access, block_t *p_buffer )
          {
              if (errno == EINTR)
                  continue;
@@ -24,7 +30,7 @@ index fbefce0be8..45de0fc75e 100644
              block_ChainRelease (p_buffer);
              msg_Err( p_access, "cannot write: %s", vlc_strerror_c(errno) );
              return -1;
-@@ -305,8 +308,13 @@ static int Open( vlc_object_t *p_this )
+@@ -304,8 +307,13 @@ static int Open( vlc_object_t *p_this )
              if (fd != -1)
                  break;
              if (fd == -1)
@@ -39,5 +45,5 @@ index fbefce0be8..45de0fc75e 100644
                  break;
              flags &= ~O_EXCL;
 -- 
-2.20.1
+2.25.1
 

@@ -21,6 +21,7 @@
 package org.videolan.vlc.providers.medialibrary
 
 import android.content.Context
+import androidx.core.content.edit
 import androidx.lifecycle.MutableLiveData
 import androidx.paging.Config
 import androidx.paging.DataSource
@@ -82,10 +83,10 @@ abstract class MedialibraryProvider<T : MediaLibraryItem>(val context: Context, 
             }
             this.sort = sort
             refresh()
-            settings.edit()
-                    .putInt(sortKey, sort)
-                    .putBoolean("${sortKey}_desc", desc)
-                    .apply()
+            settings.edit {
+                putInt(sortKey, sort)
+                putBoolean("${sortKey}_desc", desc)
+            }
         }
     }
 
@@ -95,7 +96,7 @@ abstract class MedialibraryProvider<T : MediaLibraryItem>(val context: Context, 
     }
 
     fun refresh(): Boolean {
-        if (medialibrary.isWorking || !medialibrary.isStarted || !this::dataSource.isInitialized) return false
+        if ((isRefreshing && medialibrary.isWorking) || !medialibrary.isStarted || !this::dataSource.isInitialized) return false
         privateHeaders.clear()
         if (!dataSource.isInvalid) {
             isRefreshing = true

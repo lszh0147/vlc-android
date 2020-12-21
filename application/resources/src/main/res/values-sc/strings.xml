@@ -127,8 +127,6 @@
     <string name="firstsong">Primu branu de s\'iscalita</string>
     <string name="lastsong">Ùrtimu branu de s\'iscalita</string>
 
-    <string name="locked">Blocadu</string>
-    <string name="unlocked">Isblocadu</string>
     <string name="surface_best_fit">Adata a s\'ischermu</string>
     <string name="surface_fit_screen">Adata a s\'ischermu</string>
     <string name="surface_fill">Prena</string>
@@ -148,9 +146,6 @@
     <string name="brightness">Luminosidade</string>
     <string name="advanced">optziones avantzadas</string>
     <string name="audio_boost_warning">Iscurre galu pro andare prus a in antis de su 100%</string>
-    <string name="locked_in_portrait_mode">Blocadu in modalidade verticale\n(Incarca a longu pro annullare)</string>
-    <string name="locked_in_landscape_mode">Blocadu in modalidade orizontale\n(Incarca a longu pro annullare)</string>
-    <string name="reset_orientation">Riprìstina s\'orientamentu</string>
 
     <plurals name="track_channels_info_quantity">
         <item quantity="one">1 canale\n</item>
@@ -362,7 +357,7 @@
     <string name="deblocking_nonkey">Deblocu mìnimu</string>
     <string name="deblocking_all">Perunu deblocu (prus lestru)</string>
     <string name="enable_frame_skip">Abìlita su brincu de fotogrammas</string>
-    <string name="enable_frame_skip_summary">Atzèllerat sa decodìfica, ma diat pòdere minimare sa calidade de su vìdeu</string>
+    <string name="enable_frame_skip_summary">Illestrat sa decodìfica, ma diat pòdere minimare sa calidade de su vìdeu</string>
     <string name="enable_time_stretching_audio">Illonghiamentu temporale àudio</string>
     <string name="enable_time_stretching_audio_summary">Aumenta e mìnima sa lestresa de s\'àudio chene cambiare sa tonalidade (tenent bisòngiu de unu dispositivu lestru)</string>
 
@@ -413,13 +408,11 @@
 
     <string name="delete_sub_title">Iscantzella sutatìtulos</string>
     <string name="delete_sub_message">Cheres iscantzellare custos sutatìtulos?</string>
-    <string name="delete_sub_yes">Eja</string>
-    <string name="delete_sub_no">Nono</string>
     <string name="download_subtitle_title">Iscàrriga sutatìtulos</string>
 
     <string name="no_result">Perunu risultadu agatadu</string>
     <string name="no_internet_connection">Verìfica sa connessione a ìnternet tua</string>
-    <string name="some_error_occurred">B\'est istadu carchi errore. Pro praghere torra a proare a pustis de carchi segundu</string>
+    <string name="subs_download_error">Servìtziu non disponìbile. Torra a proare prus a tardu</string>
 
     <string name="network_browsing">Retza locale</string>
     <string name="browsing">Navigatzione</string>
@@ -509,7 +502,9 @@
     <string name="ml_external_storage_msg">Cheres chi VLC annangat su dispositivu %1$s a sa biblioteca multimediale tua?</string>
     <string name="ml_external_storage_accept">Eja</string>
     <string name="ml_external_storage_decline">Nono</string>
-    <string name="last_added_media">Ùrtimas annantas</string>
+    <string name="auto_last_added_media">Ùrtimos annànghidos</string>
+    <string name="auto_my_library">Sa biblioteca mea</string>
+    <string name="auto_home">Pàgina printzipale</string>
     <string name="no">Nono</string>
     <string name="loading_medialibrary">Carrighende sa biblioteca multimediale…</string>
     <string name="yes">Eja</string>
@@ -716,4 +711,54 @@
     <string name="group_similar">Agrupa automaticamente</string>
     <string name="no_favorite">Perunu preferidu</string>
     <string name="empty_directory">Bòida</string>
+    <string name="no_track">Peruna rasta</string>
+
+    <string name="swipe_unlock">Trìsina pro isblocare</string>
+    <string name="swipe_unlock_no_touch">Incarca a longu pro isblocare</string>
+    <string name="sub_result_by_name">Resurtados pro %s</string>
+    <string name="sub_result_by_name_season">Istajone %s</string>
+    <string name="sub_result_by_name_episode">Episòdiu %s</string>
+
+    <string name="sub_result_by_file">Resurtados pro su documentu tuo</string>
+    <string name="donate">Agiuda VLC</string>
+    <string name="donate_desc">Suporta sos voluntàrios chi fraigant VLC</string>
+    <string name="donate_subscribtion">Dia chèrrere chi custa siat un\'isponsorizatzione mensile</string>
+    <string name="donate_send">Faghe incumintzare s\'isponsorizatzione tua</string>
+    <string name="donation_description">S\'isponsorizatzione nos at a permìtere de:\nmegiorare s\'aplicatzione de VLC pro Android\nsuportare sa VideoLAN Association</string>
+    <string name="subscription_purchased">Ses iscritu a un\'isponsorizatzione mensile</string>
+    <string name="subscription_cancel">Podes annullare s\'iscritzione in su Play Store</string>
+    <string name="subscription_cancel_tv">Comente annullare s\'iscritzione</string>
+    <string name="donate_unsubscribe_tv">Pro annullare s\'iscritzione, aberi %s in unu telefoneddu o un\'elaboradore o iscansi custu còdighe:</string>
+    <string name="tip_jar">Agiuda VLC</string>
+    <string name="thank_you">Gràtzias</string>
+    <string name="thank_you_desc">Ti torramus gràtzias pro s\'isponsorizatzione tua!\nNos at a a agiudare meda a megiorare VLC!</string>
+    <string name="donate_again">Isponsoriza torra s\'aplicatzione</string>
+
+    <string name="mark_as_played">Marca comente riproduidu</string>
+    <string name="mark_all_as_played">Marca totu comente riproduidu</string>
+    <string name="new_group">Grupu nou</string>
+    <string name="new_group_desc">Crea unu grupu nou</string>
+
+    <string name="air_action_rewind">Torra in segus de 10 seg.</string>
+    <string name="air_action_forward">Bae a in antis de 10 seg.</string>
+    <string name="air_action_play_pause">Pone in pàusa/Sighi cun sa riprodutzione</string>
+    <string name="air_action_volume_up">Àrtzia su volume</string>
+    <string name="air_action_volume_down">Abbassa su volume</string>
+    <string name="air_action_next">Elementu imbeniente in riprodutzione</string>
+    <string name="air_action_previous">Elementu antepostu in riprodutzione</string>
+    <string name="allow_otg">Permite s\'atzessu OTG</string>
+    <string name="allow_otg_description">Pro praghere ischerta su dispositivu OTG tuo pro permìtere s\'atzessu a VLC.</string>
+    <string name="timeout_infinite">Infinidu</string>
+    <string name="timeout_short">Curtzu</string>
+    <string name="timeout_normal">Normale</string>
+    <string name="timeout_long">Longu</string>
+    <string name="video_hud_timeout">Ritardu de cuadura de sos controllos de su riproduidore de vìdeos</string>
+    <string name="remove_from_history">Boga dae sa cronologia</string>
+    <string name="prefersmbv1">Preferi SMB 1</string>
+    <string name="prefersmbv1_summary">Boga s\'ischerta a custa impostatzione si tenes dificultades cun sa navigatzione in su serbidore SMB tuo</string>
+    <string name="apply_to_all">Àplica a totu sos vìdeos</string>
+    <string name="audio_delay_global">Ritardu àudio impostadu a %s ms pro totu sos vìdeos</string>
+    <string name="warning_stream_speed">Artziare sa lestresa de riprodutzione de sos flussos a prus de 1 diat pòdere causare una riprodutzione a iscatos</string>
+    <string name="go_to_folder">Esplora sa cartella superiore</string>
+
 </resources>

@@ -6,17 +6,16 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
-import android.text.TextUtils
+import android.util.Log
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.actor
 import kotlinx.coroutines.delay
 import org.videolan.medialibrary.interfaces.Medialibrary
-import org.videolan.tools.AppScope
-import org.videolan.vlc.gui.DialogActivity
 import org.videolan.resources.util.getFromMl
+import org.videolan.tools.AppScope
 import org.videolan.tools.isAppStarted
+import org.videolan.vlc.gui.DialogActivity
 import org.videolan.vlc.util.scanAllowed
-
 
 
 private const val TAG = "VLC/StoragesMonitor"
@@ -34,7 +33,8 @@ class StoragesMonitor : BroadcastReceiver() {
     private val actor = AppScope.actor<MediaEvent>(capacity = Channel.UNLIMITED) {
         for (action in channel) when (action){
             is Mount -> {
-                if (TextUtils.isEmpty(action.uuid)) return@actor
+                if (action.uuid.isEmpty()) return@actor
+                Log.i("StoragesMonitor", "Storage management: mount: ${action.uuid} - ${action.path}")
                 if (action.path.scanAllowed()) {
                     val isNew = action.ctx.getFromMl {
                         val isNewForML = !isDeviceKnown(action.uuid, action.path, true)
@@ -54,6 +54,7 @@ class StoragesMonitor : BroadcastReceiver() {
                 }
             }
             is Unmount -> {
+                Log.i("StoragesMonitor", "Storage management: unmount: ${action.uuid} - ${action.path}")
                 delay(100L)
                 Medialibrary.getInstance().removeDevice(action.uuid, action.path)
             }

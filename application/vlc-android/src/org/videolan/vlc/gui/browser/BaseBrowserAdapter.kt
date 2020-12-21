@@ -151,7 +151,7 @@ open class BaseBrowserAdapter(val browserContainer: BrowserContainer<MediaLibrar
                 && "content" != scheme
                 && "otg" != scheme))
         vh.bindingContainer.setFileName(if (media.type != MediaWrapper.TYPE_DIR && "file" == scheme) media.fileName else null)
-        if (networkRoot) vh.bindingContainer.setProtocol(getProtocol(media))
+        if (networkRoot || (isFavorite && getProtocol(media)?.contains("file") == false)) vh.bindingContainer.setProtocol(getProtocol(media))
         vh.bindingContainer.setCover(getIcon(media, specialIcons))
         vh.selectView(multiSelectHelper.isSelected(position))
     }
@@ -183,7 +183,7 @@ open class BaseBrowserAdapter(val browserContainer: BrowserContainer<MediaLibrar
     }
 
     @TargetApi(Build.VERSION_CODES.M)
-    internal inner class MediaViewHolder(val bindingContainer: BrowserItemBindingContainer) : ViewHolder<ViewDataBinding>(bindingContainer.binding), MarqueeViewHolder {
+    inner class MediaViewHolder(val bindingContainer: BrowserItemBindingContainer) : ViewHolder<ViewDataBinding>(bindingContainer.binding), MarqueeViewHolder {
         override val titleView: TextView? = bindingContainer.title
         var job : Job? = null
 
@@ -198,6 +198,10 @@ open class BaseBrowserAdapter(val browserContainer: BrowserContainer<MediaLibrar
             }
         }
 
+        override fun selectView(selected: Boolean) {
+            super.selectView(selected)
+            bindingContainer.moreIcon.visibility = if (multiSelectHelper.inActionMode) View.INVISIBLE else View.VISIBLE
+        }
 
         override fun onCheckBoxClick(v: View) {
             if (getItem(layoutPosition).itemType == TYPE_STORAGE)

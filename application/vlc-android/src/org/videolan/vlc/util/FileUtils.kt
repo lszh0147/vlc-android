@@ -27,13 +27,14 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.AssetManager
 import android.database.Cursor
+import android.database.sqlite.SQLiteException
 import android.net.Uri
 import android.os.ParcelFileDescriptor
 import android.os.storage.StorageManager
 import android.provider.MediaStore
-import android.text.TextUtils
 import android.util.Log
 import androidx.annotation.WorkerThread
+import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import kotlinx.coroutines.*
 import org.videolan.libvlc.util.AndroidUtil
@@ -68,7 +69,7 @@ object FileUtils {
     fun getFileNameFromPath(filePath: String?) =  filePath?.substringAfterLast('/') ?: ""
 
     fun getParent(path: String?): String? {
-        if (path == null || TextUtils.equals("/", path))
+        if (path == null || path == "/")
             return path
         var parentPath: String = path
         if (parentPath.endsWith("/"))
@@ -85,7 +86,7 @@ object FileUtils {
      * Convert file:// uri from real path to emulated FS path.
      */
     fun convertLocalUri(uri: Uri): Uri {
-        return if (!TextUtils.equals(uri.scheme, "file") || !uri.path!!.startsWith("/sdcard")) uri else Uri.parse(uri.toString().replace("/sdcard", AndroidDevices.EXTERNAL_PUBLIC_DIRECTORY))
+        return if (uri.scheme != "file" || !uri.path!!.startsWith("/sdcard")) uri else uri.toString().replace("/sdcard", AndroidDevices.EXTERNAL_PUBLIC_DIRECTORY).toUri()
     }
 
     @WorkerThread
@@ -96,12 +97,16 @@ object FileUtils {
             cursor = AppContextProvider.appContext.contentResolver.query(contentUri, proj, null, null, null)
             if (cursor == null || cursor.count == 0)
                 return ""
-            val column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA)
+            val columnIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA)
             cursor.moveToFirst()
-            return cursor.getString(column_index)
+            return Uri.fromFile(File(cursor.getString(columnIndex))).toString()
         } catch (e: IllegalArgumentException) {
             return ""
         } catch (e: SecurityException) {
+            return ""
+        } catch (e: SQLiteException) {
+            return ""
+        } catch (e: NullPointerException) {
             return ""
         } finally {
             if (cursor != null && !cursor.isClosed) cursor.close()
@@ -287,23 +292,20 @@ object FileUtils {
     fun canSave(mw: MediaWrapper?): Boolean {
         if (mw == null || mw.uri == null) return false
         val scheme = mw.uri.scheme
-        return (TextUtils.equals(scheme, "file") || TextUtils.equals(scheme, "smb")
-                || TextUtils.equals(scheme, "nfs") || TextUtils.equals(scheme, "ftp")
-                || TextUtils.equals(scheme, "ftps") || TextUtils.equals(scheme, "sftp")
-                || TextUtils.equals(scheme, "upnp"))
+        return scheme in arrayOf("file", "smb", "nfs", "ftp", "ftps", "sftp", "upnp")
     }
 
     @WorkerThread
     fun canWrite(uri: Uri?): Boolean {
         if (uri == null) return false
-        return if (TextUtils.equals("file", uri.scheme)) canWrite(uri.path) else TextUtils.equals("content", uri.scheme) && canWrite(getPathFromURI(uri))
+        return if (uri.scheme == "file") canWrite(uri.path) else uri.scheme == "content" && canWrite(getPathFromURI(uri))
     }
 
     @WorkerThread
     fun canWrite(path: String?): Boolean {
         var path = path
-        if (TextUtils.isEmpty(path)) return false
-        if (path!!.startsWith("file://")) path = path.substring(7)
+        if (path.isNullOrEmpty()) return false
+        if (path.startsWith("file://")) path = path.substring(7)
         return path.startsWith("/")
     }
 
@@ -311,9 +313,9 @@ object FileUtils {
     fun getMediaStorage(uri: Uri?): String? {
         if (uri == null || "file" != uri.scheme) return null
         val path = uri.path
-        if (TextUtils.isEmpty(path)) return null
+        if (path.isNullOrEmpty()) return null
         val storages = AndroidDevices.externalStorageDirectories
-        for (storage in storages) if (path!!.startsWith(storage)) return storage
+        for (storage in storages) if (path.startsWith(storage)) return storage
         return null
     }
 
@@ -322,7 +324,7 @@ object FileUtils {
         uri.path?.let { path ->
             val context = (AppContextProvider.appContext as Context?) ?: return null
             val treePref = getMediaStorage(uri)?.let { Settings.getInstance(context).getString("tree_uri_$it", null) } ?: return null
-            val treeUri = Uri.parse(treePref)
+            val treeUri = treePref.toUri()
             var documentFile = DocumentFile.fromTreeUri(context, treeUri)
             val parts = path.split("/".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
             for (i in 3 until parts.size) {
@@ -341,7 +343,7 @@ object FileUtils {
     fun getUri(data: Uri?): Uri? {
         var uri = data
         val ctx = AppContextProvider.appContext
-        if (data != null && ctx != null && TextUtils.equals(data.scheme, "content")) {
+        if (data != null && ctx != null && data.scheme == "content") {
             // Mail-based apps - download the stream to a temporary file and play it
             if ("com.fsck.k9.attachmentprovider" == data.host || "gmail-ls" == data.host) {
                 var inputStream: InputStream? = null
@@ -372,9 +374,9 @@ object FileUtils {
                     CloseableUtils.close(os)
                     CloseableUtils.close(cursor)
                 }
-            } else if (TextUtils.equals(data.authority, "media")) {
+            } else if (data.authority == "media") {
                 uri = MediaUtils.getContentMediaUri(data)
-            } else if (TextUtils.equals(data.authority, ctx.getString(R.string.tv_provider_authority))) {
+            } else if (data.authority == ctx.getString(R.string.tv_provider_authority)) {
                 val medialibrary = Medialibrary.getInstance()
                 val media = medialibrary.getMedia(data.lastPathSegment!!.toLong())
                 uri = media.uri
@@ -537,7 +539,7 @@ object FileUtils {
 }
 
 fun String?.getParentFolder(): String? {
-    if (this == null || TextUtils.equals("/", this)) return this
+    if (this == null || this == "/") return this
     var parentPath: String = this
     if (parentPath.endsWith("/"))
         parentPath = parentPath.substring(0, parentPath.length - 1)

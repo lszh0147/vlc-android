@@ -26,6 +26,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.core.content.ContextCompat
+import androidx.core.os.bundleOf
 import androidx.fragment.app.FragmentActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -119,6 +120,9 @@ class ContextSheet : VLCBottomSheetDialogFragment() {
         if (flags and CTX_RENAME_GROUP != 0L) add(Simple(CTX_RENAME_GROUP, getString(R.string.rename_group), R.drawable.ic_ctx_edit))
         if (flags and CTX_UNGROUP != 0L) add(Simple(CTX_UNGROUP, getString(R.string.ungroup), R.drawable.ic_ctx_delete))
         if (flags and CTX_GROUP_SIMILAR != 0L) add(Simple(CTX_GROUP_SIMILAR, getString(R.string.group_similar), R.drawable.ic_ctx_group_auto))
+        if (flags and CTX_MARK_AS_PLAYED != 0L) add(Simple(CTX_MARK_AS_PLAYED, getString(R.string.mark_as_played), R.drawable.ic_ctx_mark_as_played))
+        if (flags and CTX_MARK_ALL_AS_PLAYED != 0L) add(Simple(CTX_MARK_ALL_AS_PLAYED, getString(R.string.mark_all_as_played), R.drawable.ic_ctx_mark_all_as_played))
+        if (flags and CTX_GO_TO_FOLDER != 0L) add(Simple(CTX_GO_TO_FOLDER, getString(R.string.go_to_folder), R.drawable.ic_ctx_folder))
     }
 
     inner class ContextAdapter : RecyclerView.Adapter<ContextAdapter.ViewHolder>() {
@@ -158,11 +162,8 @@ interface CtxActionReceiver {
 fun showContext(activity: FragmentActivity, receiver: CtxActionReceiver, position: Int, title: String, flags: Long) {
     if (!activity.isStarted()) return
     val ctxDialog = ContextSheet()
-    ctxDialog.arguments = Bundle(3).apply {
-        putString(CTX_TITLE_KEY, title)
-        putInt(CTX_POSITION_KEY, position)
-        putLong(CTX_FLAGS_KEY, flags)
-    }
+    ctxDialog.arguments = bundleOf(CTX_TITLE_KEY to title, CTX_POSITION_KEY to position,
+        CTX_FLAGS_KEY to flags)
     ctxDialog.receiver = receiver
     ctxDialog.show(activity.supportFragmentManager, "context")
 }

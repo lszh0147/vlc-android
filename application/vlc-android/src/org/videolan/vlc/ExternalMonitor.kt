@@ -32,8 +32,8 @@ import android.content.IntentFilter
 import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbManager
 import android.net.Uri
-import android.text.TextUtils
-import androidx.core.content.ContextCompat
+import android.util.Log
+import androidx.core.content.getSystemService
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
@@ -49,6 +49,7 @@ import org.videolan.medialibrary.interfaces.Medialibrary
 import org.videolan.resources.ACTION_CHECK_STORAGES
 import org.videolan.resources.AppContextProvider
 import org.videolan.resources.util.getFromMl
+import org.videolan.resources.util.launchForeground
 import org.videolan.tools.*
 import org.videolan.tools.livedata.LiveDataset
 import org.videolan.vlc.gui.helpers.UiTools
@@ -68,7 +69,8 @@ object ExternalMonitor : BroadcastReceiver(), LifecycleObserver, CoroutineScope 
     private val actor = actor<DeviceAction>(capacity = Channel.CONFLATED) {
         for (action in channel) when (action){
             is MediaMounted -> {
-                if (TextUtils.isEmpty(action.uuid)) return@actor
+                if (action.uuid.isEmpty()) return@actor
+                Log.i("ExternalMonitor", "Storage management: mount: ${action.uuid} - ${action.path}")
                 val isNew = ctx.getFromMl {
                     val isNewForMl = !isDeviceKnown(action.uuid, action.path, true)
                     addDevice(action.uuid, action.path, true)
@@ -78,6 +80,7 @@ object ExternalMonitor : BroadcastReceiver(), LifecycleObserver, CoroutineScope 
             }
             is MediaUnmounted -> {
                 delay(100L)
+                Log.i("ExternalMonitor", "Storage management: unmount: ${action.uuid} - ${action.path}")
                 Medialibrary.getInstance().removeDevice(action.uuid, action.path)
                 storageChannel.safeOffer(action)
             }
@@ -142,9 +145,9 @@ object ExternalMonitor : BroadcastReceiver(), LifecycleObserver, CoroutineScope 
             val scanOpt = if (Settings.showTvUi) ML_SCAN_ON
             else Settings.getInstance(ctx).getInt(KEY_MEDIALIBRARY_SCAN, -1)
             if (scanOpt == ML_SCAN_ON)
-                AppScope.launch { ContextCompat.startForegroundService(ctx,Intent(ACTION_CHECK_STORAGES, null, ctx, MediaParsingService::class.java)) }
+                AppScope.launch { ctx.launchForeground(ctx,Intent(ACTION_CHECK_STORAGES, null, ctx, MediaParsingService::class.java)) }
         }
-        val usbManager = ctx.getSystemService(Context.USB_SERVICE) as? UsbManager ?: return
+        val usbManager = ctx.getSystemService<UsbManager>() ?: return
         devices.add(ArrayList(usbManager.deviceList.values))
     }
 

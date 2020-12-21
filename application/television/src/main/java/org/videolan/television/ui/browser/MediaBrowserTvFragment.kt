@@ -3,17 +3,15 @@ package org.videolan.television.ui.browser
 import android.os.Bundle
 import android.os.Parcelable
 import android.view.View
-import androidx.lifecycle.Observer
+import androidx.core.os.bundleOf
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.ObsoleteCoroutinesApi
 import org.videolan.medialibrary.interfaces.Medialibrary
 import org.videolan.medialibrary.interfaces.media.MediaWrapper
 import org.videolan.medialibrary.media.MediaLibraryItem
 import org.videolan.resources.*
-import org.videolan.resources.util.HeadersIndex
 import org.videolan.television.ui.MediaTvItemAdapter
 import org.videolan.television.ui.TvItemAdapter
 import org.videolan.television.ui.TvUtil
@@ -25,7 +23,6 @@ import org.videolan.vlc.R
 import org.videolan.vlc.gui.view.EmptyLoadingState
 import org.videolan.vlc.interfaces.IEventsHandler
 import org.videolan.vlc.providers.medialibrary.MedialibraryProvider
-import java.util.*
 
 @UseExperimental(ObsoleteCoroutinesApi::class)
 @ExperimentalCoroutinesApi
@@ -62,10 +59,7 @@ class MediaBrowserTvFragment : BaseBrowserTvFragment<MediaLibraryItem>() {
     companion object {
         fun newInstance(type: Long, item: MediaLibraryItem?) =
                 MediaBrowserTvFragment().apply {
-                    arguments = Bundle().apply {
-                        this.putLong(CATEGORY, type)
-                        this.putParcelable(ITEM, item)
-                    }
+                    arguments = bundleOf(CATEGORY to type, ITEM to item)
                 }
     }
 
@@ -77,7 +71,7 @@ class MediaBrowserTvFragment : BaseBrowserTvFragment<MediaLibraryItem>() {
 
         viewModel = getMediaBrowserModel(arguments?.getLong(CATEGORY, CATEGORY_SONGS) ?: CATEGORY_SONGS, currentItem)
 
-        (viewModel.provider as MedialibraryProvider<*>).pagedList.observe(this, Observer { items ->
+        (viewModel.provider as MedialibraryProvider<*>).pagedList.observe(this, { items ->
             submitList(items)
 
             binding.emptyLoading.state = if (items.isEmpty()) EmptyLoadingState.EMPTY else EmptyLoadingState.NONE
@@ -89,12 +83,12 @@ class MediaBrowserTvFragment : BaseBrowserTvFragment<MediaLibraryItem>() {
             headerAdapter.sortType = (viewModel as MediaBrowserViewModel).sort
         })
 
-        viewModel.provider.liveHeaders.observe(this, Observer {
+        viewModel.provider.liveHeaders.observe(this, {
             updateHeaders(it)
             binding.list.invalidateItemDecorations()
         })
 
-        (viewModel.provider as MedialibraryProvider<*>).loading.observe(this, Observer {
+        (viewModel.provider as MedialibraryProvider<*>).loading.observe(this, {
             binding.emptyLoading.state = when {
                 it -> EmptyLoadingState.LOADING
                 viewModel.isEmpty() && adapter.isEmpty() -> EmptyLoadingState.EMPTY

@@ -26,6 +26,7 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.util.TypedValue
 import android.view.KeyEvent
 import android.view.MenuItem
@@ -37,11 +38,15 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.ObsoleteCoroutinesApi
 import org.videolan.libvlc.util.AndroidUtil
 import org.videolan.medialibrary.interfaces.Medialibrary
-import org.videolan.resources.*
+import org.videolan.resources.ACTIVITY_RESULT_OPEN
+import org.videolan.resources.ACTIVITY_RESULT_PREFERENCES
+import org.videolan.resources.ACTIVITY_RESULT_SECONDARY
+import org.videolan.resources.EXTRA_TARGET
 import org.videolan.tools.*
 import org.videolan.vlc.BuildConfig
 import org.videolan.vlc.R
 import org.videolan.vlc.StartActivity
+import org.videolan.vlc.donations.VLCBilling
 import org.videolan.vlc.extensions.ExtensionManagerService
 import org.videolan.vlc.extensions.ExtensionsManager
 import org.videolan.vlc.gui.audio.AudioBrowserFragment
@@ -68,7 +73,6 @@ class MainActivity : ContentActivity(),
 {
     var refreshing: Boolean = false
         set(value) {
-            mainLoading.visibility = if (value) View.VISIBLE else View.GONE
             field = value
         }
     private lateinit var mediaLibrary: Medialibrary
@@ -91,11 +95,7 @@ class MainActivity : ContentActivity(),
         if (BuildConfig.DEBUG) extensionsManager = ExtensionsManager.getInstance()
         mediaLibrary = Medialibrary.getInstance()
 
-        val color = TypedValue().run {
-            theme.resolveAttribute(R.attr.progress_indeterminate_tint, this, true)
-            data
-        }
-        mainLoadingProgress.indeterminateDrawable.setColorFilter(color, android.graphics.PorterDuff.Mode.SRC_IN)
+        VLCBilling.getInstance(application).retrieveSkus()
     }
 
 
@@ -205,6 +205,7 @@ class MainActivity : ContentActivity(),
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+        if (VLCBilling.getInstance(this.application).iabHelper.handleActivityResult(requestCode, resultCode, data)) return
         if (requestCode == ACTIVITY_RESULT_PREFERENCES) {
             when (resultCode) {
                 RESULT_RESCAN -> this.reloadLibrary()

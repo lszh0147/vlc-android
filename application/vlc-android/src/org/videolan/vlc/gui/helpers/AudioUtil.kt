@@ -19,16 +19,18 @@
  */
 package org.videolan.vlc.gui.helpers
 
-import android.content.ContentValues
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Bitmap.CompressFormat
 import android.graphics.BitmapFactory
 import android.media.RingtoneManager
+import android.net.Uri
+import android.os.Build
 import android.provider.MediaStore
 import android.util.Log
 import android.widget.Toast
 import androidx.annotation.WorkerThread
+import androidx.core.content.contentValuesOf
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
@@ -44,6 +46,7 @@ import org.videolan.tools.HttpImageLoader
 import org.videolan.vlc.R
 import org.videolan.vlc.gui.helpers.UiTools.snackerConfirm
 import org.videolan.vlc.util.Permissions
+import org.videolan.vlc.util.isSchemeHttpOrHttps
 import java.io.*
 import java.lang.Runnable
 
@@ -61,35 +64,53 @@ object AudioUtil {
             Permissions.checkWriteSettingsPermission(this, Permissions.PERMISSION_SYSTEM_RINGTONE)
             return
         }
-        lifecycleScope.snackerConfirm(window.decorView, getString(R.string.set_song_question, song.title)) {
+        val view = window.decorView.findViewById(R.id.coordinator) ?: window.decorView
+        lifecycleScope.snackerConfirm(this, getString(R.string.set_song_question, song.title)) {
             val newRingtone = AndroidUtil.UriToFile(song.uri)
             if (!withContext(Dispatchers.IO) { newRingtone.exists() }) {
                 Toast.makeText(applicationContext, getString(R.string.ringtone_error), Toast.LENGTH_SHORT).show()
                 return@snackerConfirm
             }
 
-            val values = ContentValues().apply {
-                put(MediaStore.MediaColumns.DATA, newRingtone.absolutePath)
-                put(MediaStore.MediaColumns.TITLE, song.title)
-                put(MediaStore.MediaColumns.MIME_TYPE, "audio/*")
-                put(MediaStore.Audio.Media.ARTIST, song.artist)
-                put(MediaStore.Audio.Media.IS_RINGTONE, true)
-                put(MediaStore.Audio.Media.IS_NOTIFICATION, false)
-                put(MediaStore.Audio.Media.IS_ALARM, false)
-                put(MediaStore.Audio.Media.IS_MUSIC, false)
-            }
-
+            val values = contentValuesOf(
+                    MediaStore.MediaColumns.TITLE to song.title,
+                    MediaStore.MediaColumns.MIME_TYPE to "audio/*",
+                    MediaStore.Audio.Media.ARTIST to song.artist,
+                    MediaStore.Audio.Media.IS_RINGTONE to true,
+                    MediaStore.Audio.Media.IS_NOTIFICATION to false,
+                    MediaStore.Audio.Media.IS_ALARM to false,
+                    MediaStore.Audio.Media.IS_MUSIC to false
+            )
             try {
-                val uri = withContext(Dispatchers.IO) {
-                    val tmpUri = MediaStore.Audio.Media.getContentUriForPath(newRingtone.absolutePath)
-                    contentResolver.delete(tmpUri, MediaStore.MediaColumns.DATA + "=\"" + newRingtone.absolutePath + "\"", null)
-                    contentResolver.insert(tmpUri, values)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    val newUri: Uri = this.contentResolver
+                            .insert(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, values)!!
+                    contentResolver.openOutputStream(newUri).use { os ->
+                        val size = newRingtone.length().toInt()
+                        val bytes = ByteArray(size)
+                        val buf = BufferedInputStream(FileInputStream(newRingtone))
+                        buf.read(bytes, 0, bytes.size)
+                        buf.close()
+                        os!!.write(bytes)
+                        os.close()
+                        os.flush()
+                    }
+                    RingtoneManager.setActualDefaultRingtoneUri(this, RingtoneManager.TYPE_RINGTONE,
+                            newUri)
+                } else {
+                    values.put(MediaStore.Audio.Media.DATA, newRingtone.absolutePath)
+
+                    val uri = withContext(Dispatchers.IO) {
+                        val tmpUri = MediaStore.Audio.Media.getContentUriForPath(newRingtone.absolutePath)
+                        contentResolver.delete(tmpUri, MediaStore.MediaColumns.DATA + "=\"" + newRingtone.absolutePath + "\"", null)
+                        contentResolver.insert(tmpUri, values)
+                    }
+                    RingtoneManager.setActualDefaultRingtoneUri(
+                            applicationContext,
+                            RingtoneManager.TYPE_RINGTONE,
+                            uri
+                    )
                 }
-                RingtoneManager.setActualDefaultRingtoneUri(
-                        applicationContext,
-                        RingtoneManager.TYPE_RINGTONE,
-                        uri
-                )
             } catch (e: Exception) {
                 Log.e(TAG, "error setting ringtone", e)
                 Toast.makeText(applicationContext,
@@ -146,10 +167,10 @@ object AudioUtil {
     @WorkerThread
     fun readCoverBitmap(path: String?, width: Int): Bitmap? {
         val path = path ?: return null
-        if (path.startsWith("http")) return runBlocking(Dispatchers.Main) {
+        if (isSchemeHttpOrHttps(path)) return runBlocking(Dispatchers.Main) {
             HttpImageLoader.downloadBitmap(path)
         }
-        return BitmapCache.getBitmapFromMemCache(path.substringAfter("file://")) ?: fetchCoverBitmap(path, width)
+        return BitmapCache.getBitmapFromMemCache(path.substringAfter("file://")+"_$width") ?: fetchCoverBitmap(path, width)
     }
 
     @WorkerThread
@@ -168,7 +189,7 @@ object AudioUtil {
 
             // Find the best decoding scale for the bitmap
             if (width > 0) {
-                while (options.outWidth / options.inSampleSize > width)
+                while (options.outWidth / (options.inSampleSize + 1) > width)
                     options.inSampleSize = options.inSampleSize * 2
             }
 

@@ -47,7 +47,7 @@
     <string name="set_song_question">\'%1$s\' als Klingelton festlegen?</string>
     <string name="info">Information</string>
     <string name="confirm_delete">Die Datei \'%1$s\' löschen?</string>
-    <string name="confirm_delete_album">Das Album  \'%1$s\' löschen?</string>
+    <string name="confirm_delete_album">Das Album \'%1$s\' löschen?</string>
     <string name="confirm_delete_several_media">%1$d wirklich löschen?</string>
     <string name="confirm_delete_folder">Den Ordner \'%1$s\' mit dem gesamten Inhalt löschen?</string>
     <string name="confirm_delete_playlist">Wiedergabeliste \'%1$s\' löschen?</string>
@@ -127,8 +127,6 @@
     <string name="firstsong">Erstes Lied der Wiedergabeliste</string>
     <string name="lastsong">Letztes Lied der Wiedergabeliste</string>
 
-    <string name="locked">Gesperrt</string>
-    <string name="unlocked">Entsperrt</string>
     <string name="surface_best_fit">Beste Größe</string>
     <string name="surface_fit_screen">An Bildschirm anpassen</string>
     <string name="surface_fill">Ausfüllen</string>
@@ -148,9 +146,6 @@
     <string name="brightness">Helligkeit</string>
     <string name="advanced">Erweiterte Optionen</string>
     <string name="audio_boost_warning">Für mehr als 100% nach oben schieben</string>
-    <string name="locked_in_portrait_mode">Im Hochformat gesperrt\n(Langer Tastendruck zum Entsperren)</string>
-    <string name="locked_in_landscape_mode">Im Querformat gesperrt\n(Langer Tastendruck zum Entsperren)</string>
-    <string name="reset_orientation">Ausrichtung zurücksetzen</string>
 
     <plurals name="track_channels_info_quantity">
         <item quantity="one">1 Kanal\n</item>
@@ -413,13 +408,11 @@
 
     <string name="delete_sub_title">Untertitel löschen</string>
     <string name="delete_sub_message">Möchten Sie diese Untertitel löschen?</string>
-    <string name="delete_sub_yes">Ja</string>
-    <string name="delete_sub_no">Nein</string>
     <string name="download_subtitle_title">Untertitel herunterladen</string>
 
     <string name="no_result">Keine Ergebnisse gefunden</string>
     <string name="no_internet_connection">Überprüfen Sie Ihre Internetverbindung</string>
-    <string name="some_error_occurred">Ein Fehler ist aufgetreten. Bitte versuchen Sie es in einigen Sekunden erneut.</string>
+    <string name="subs_download_error">Service nicht verfügbar, versuchen Sie es später erneut</string>
 
     <string name="network_browsing">Lokales Netzwerk</string>
     <string name="browsing">Surfen</string>
@@ -509,7 +502,9 @@
     <string name="ml_external_storage_msg">Möchten Sie, dass VLC das Gerät %1$s zu Ihrer Medienbibliothek hinzufügt?</string>
     <string name="ml_external_storage_accept">Ja</string>
     <string name="ml_external_storage_decline">Nein</string>
-    <string name="last_added_media">Zuletzt hinzugefügt</string>
+    <string name="auto_last_added_media">Zuletzt hinzugefügt</string>
+    <string name="auto_my_library">Meine Medienbibliothek</string>
+    <string name="auto_home">Startseite</string>
     <string name="no">Nein</string>
     <string name="loading_medialibrary">Medienbibliothek wird geladen…</string>
     <string name="yes">Ja</string>
@@ -545,7 +540,7 @@
     <string name="audio_task_cleared_summary">Wiedergabe wird gestoppt, wenn VLC aus der Liste der letzten Anwendungen entfernt wurde</string>
     <string name="audio_resume_card_title">Letzte Wiedergabe-Hinweis anzeigen</string>
     <string name="audio_resume_card_summary">Zeigt einen Hinweis, mit dem Sie die Audiowiedergabe beim Start der App fortsetzen können</string>
-    <string name="playback_rewind">Zurückspulen </string>
+    <string name="playback_rewind">Zurückspulen</string>
     <string name="playback_forward">Schnell vorspulen</string>
     <string name="ml_wizard_scan_checkbox">Gerät nach Medieninhalten durchsuchen</string>
     <string name="ml_wizard_description">Wählen Sie aus, ob VLC den Gerätespeicher durchsuchen soll, um Ihre Medienbibliothek zu organisieren, oder verwenden Sie VLC als einfachen Player mit integriertem Browser.</string>
@@ -716,4 +711,54 @@
     <string name="group_similar">Automatisch neu gruppieren</string>
     <string name="no_favorite">Keine Favoriten</string>
     <string name="empty_directory">Leer</string>
+    <string name="no_track">Kein Titel</string>
+
+    <string name="swipe_unlock">Wischen zum Entsperren</string>
+    <string name="swipe_unlock_no_touch">Lange drücken zum Entsperren</string>
+    <string name="sub_result_by_name">Ergebnis für %s</string>
+    <string name="sub_result_by_name_season">Staffel %s</string>
+    <string name="sub_result_by_name_episode">Episode %s</string>
+
+    <string name="sub_result_by_file">Ergebnis für Ihre Datei</string>
+    <string name="donate">VLC helfen</string>
+    <string name="donate_desc">Die Freiwilligen unterstützen, die VLC entwickeln</string>
+    <string name="donate_subscribtion">Ich möchte, dass dies eine monatliche Unterstützung ist</string>
+    <string name="donate_send">Ihre Unterstützung starten</string>
+    <string name="donation_description">Ihre Unterstützung ermöglicht es uns:\ndie VLC-App für Android zu verbessern\ndie VideoLAN Association zu unterstützen</string>
+    <string name="subscription_purchased">Sie haben eine monatliche Unterstützung abonniert</string>
+    <string name="subscription_cancel">Sie können die Unterstützung im PlayStore beenden</string>
+    <string name="subscription_cancel_tv">Wie wird die Unterstützung beendet</string>
+    <string name="donate_unsubscribe_tv">Zum Beenden, bitte %s auf einem Computer oder Handy öffnen und diesen Code scannen:</string>
+    <string name="tip_jar">VLC helfen</string>
+    <string name="thank_you">Vielen Dank</string>
+    <string name="thank_you_desc">Danke für Ihre Unterstützung!\nDies wird uns bei der Verbesserung von VLC helfen.</string>
+    <string name="donate_again">Die App nochmals unterstützen</string>
+
+    <string name="mark_as_played">Als gespielt markieren</string>
+    <string name="mark_all_as_played">Alle als gespielt markieren</string>
+    <string name="new_group">Neue Gruppe</string>
+    <string name="new_group_desc">Neue Gruppe erstellen</string>
+
+    <string name="air_action_rewind">10 Sek. zurückspulen</string>
+    <string name="air_action_forward">10 Sek. vorspulen</string>
+    <string name="air_action_play_pause">Wiedergabe pausieren/fortsetzen</string>
+    <string name="air_action_volume_up">Lauter</string>
+    <string name="air_action_volume_down">Leiser</string>
+    <string name="air_action_next">Nächster Eintrag in der Wiedergabeliste</string>
+    <string name="air_action_previous">Vorheriger Eintrag in der Wiedergabeliste</string>
+    <string name="allow_otg">OTG-Zugriff erlauben</string>
+    <string name="allow_otg_description">Bitte wählen Sie Ihr OTG-Laufwerk aus, um den Zugriff auf VLC zu ermöglichen</string>
+    <string name="timeout_infinite">Unendlich</string>
+    <string name="timeout_short">Kurz</string>
+    <string name="timeout_normal">Normal</string>
+    <string name="timeout_long">Lang</string>
+    <string name="video_hud_timeout">Der Video-Player steuert die Verzögerung beim Ausblenden</string>
+    <string name="remove_from_history">Aus dem Verlauf entfernen</string>
+    <string name="prefersmbv1">SMB 1 bevorzugen</string>
+    <string name="prefersmbv1_summary">Wenn Sie Probleme beim Durchsuchen Ihres SMB-Servers haben, bitte diese Einstellung deaktivieren</string>
+    <string name="apply_to_all">Auf alle Videos anwenden</string>
+    <string name="audio_delay_global">Tonverzögerung für alle Videos auf %s ms gesetzt</string>
+    <string name="warning_stream_speed">Die Erhöhung der Wiedergabegeschwindigkeit für Streams auf über 1 kann zum Stottern führen</string>
+    <string name="go_to_folder">Übergeordnetes Verzeichnis durchsuchen</string>
+
 </resources>

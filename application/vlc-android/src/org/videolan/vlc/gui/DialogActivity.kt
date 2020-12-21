@@ -24,18 +24,20 @@
 package org.videolan.vlc.gui
 
 import android.os.Bundle
-import android.text.TextUtils
+import android.view.View
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.ObsoleteCoroutinesApi
 import org.videolan.libvlc.Dialog
 import org.videolan.medialibrary.interfaces.media.MediaWrapper
 import org.videolan.vlc.R
-import org.videolan.vlc.gui.dialogs.*
+import org.videolan.vlc.gui.dialogs.DeviceDialog
+import org.videolan.vlc.gui.dialogs.NetworkServerDialog
 import org.videolan.vlc.media.MediaUtils
 import org.videolan.vlc.util.showVlcDialog
 
 @ExperimentalCoroutinesApi
 class DialogActivity : BaseActivity() {
+    override fun getSnackAnchorView(): View? = findViewById<View>(android.R.id.content)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,7 +65,7 @@ class DialogActivity : BaseActivity() {
         window.decorView.alpha = 0f
         val dialog = DeviceDialog()
         val intent = intent
-        dialog.setDevice(intent.getStringExtra(EXTRA_PATH), intent.getStringExtra(EXTRA_UUID), intent.getBooleanExtra(EXTRA_SCAN, false))
+        dialog.setDevice(intent.getStringExtra(EXTRA_PATH)!!, intent.getStringExtra(EXTRA_UUID)!!, intent.getBooleanExtra(EXTRA_SCAN, false))
         dialog.show(supportFragmentManager, "device_dialog")
     }
 

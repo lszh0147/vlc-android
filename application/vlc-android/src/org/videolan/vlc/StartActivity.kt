@@ -29,9 +29,9 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
-import android.text.TextUtils
 import android.util.Log
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.CoroutineStart
@@ -67,7 +67,7 @@ class StartActivity : FragmentActivity() {
             if (!AndroidUtil.isNougatMR1OrLater) return 0
             val intent = intent
             val action = intent?.action
-            if (!TextUtils.isEmpty(action)) {
+            if (!action.isNullOrEmpty()) {
                 return when (action) {
                     "vlc.shortcut.video" -> R.id.nav_video
                     "vlc.shortcut.audio" -> R.id.nav_audio
@@ -117,7 +117,7 @@ class StartActivity : FragmentActivity() {
             val item = if (cd != null && cd.itemCount > 0) cd.getItemAt(0) else null
             if (item != null) {
                 var uri: Uri? = item.uri
-                if (uri == null && item.text != null) uri = Uri.parse(item.text.toString())
+                if (uri == null && item.text != null) uri = item.text.toString().toUri()
                 if (uri != null) {
                     MediaUtils.openMediaNoUi(uri)
                     finish()
@@ -136,7 +136,7 @@ class StartActivity : FragmentActivity() {
         // Start application
         /* Get the current version from package */
         val settings = Settings.getInstance(this)
-        val currentVersionNumber = BuildConfig.VERSION_CODE
+        val currentVersionNumber = BuildConfig.VLC_VERSION_CODE
         val savedVersionNumber = settings.getInt(PREF_FIRST_RUN, -1)
         /* Check if it's the first run */
         val firstRun = savedVersionNumber == -1
@@ -157,9 +157,9 @@ class StartActivity : FragmentActivity() {
         } else if (Intent.ACTION_VIEW == action && intent.data != null) { //launch from TV Channel
             val data = intent.data
             val path = data!!.path
-            if (TextUtils.equals(path, "/$TV_CHANNEL_PATH_APP"))
+            if (path == "/$TV_CHANNEL_PATH_APP")
                 startApplication(tv, firstRun, upgrade, 0, removeOldDevices)
-            else if (TextUtils.equals(path, "/$TV_CHANNEL_PATH_VIDEO")) {
+            else if (path == "/$TV_CHANNEL_PATH_VIDEO") {
                 val id = java.lang.Long.valueOf(data.getQueryParameter(TV_CHANNEL_QUERY_VIDEO_ID)!!)
                 MediaUtils.openMediaNoUi(this, id)
             }

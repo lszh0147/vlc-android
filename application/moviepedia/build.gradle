@@ -6,6 +6,8 @@ apply plugin: 'kotlin-android-extensions'
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
 
+    kotlinOptions.jvmTarget = "1.8"
+
     dataBinding {
         enabled = true
     }
@@ -17,8 +19,7 @@ android {
     defaultConfig {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode rootProject.ext.versionCode
-        versionName rootProject.ext.versionName
+        buildConfigField 'int', 'VLC_VERSION_CODE', "${rootProject.ext.versionCode}"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles 'consumer-rules.pro'

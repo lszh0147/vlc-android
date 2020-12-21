@@ -32,13 +32,10 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.media.MediaRouter
-import android.net.Uri
 import android.os.Build
-import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.renderscript.*
-import android.text.Html
 import android.text.TextUtils
 import android.text.method.LinkMovementMethod
 import android.view.*
@@ -54,6 +51,10 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
+import androidx.core.content.getSystemService
+import androidx.core.net.toUri
+import androidx.core.os.bundleOf
+import androidx.core.text.HtmlCompat
 import androidx.databinding.BindingAdapter
 import androidx.fragment.app.FragmentActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -69,6 +70,7 @@ import org.videolan.medialibrary.interfaces.Medialibrary
 import org.videolan.medialibrary.interfaces.media.MediaWrapper
 import org.videolan.medialibrary.media.MediaLibraryItem
 import org.videolan.resources.*
+import org.videolan.resources.util.launchForeground
 import org.videolan.tools.KEY_APP_THEME
 import org.videolan.tools.Settings
 import org.videolan.tools.isStarted
@@ -79,6 +81,7 @@ import org.videolan.vlc.gui.InfoActivity
 import org.videolan.vlc.gui.browser.MediaBrowserFragment
 import org.videolan.vlc.gui.dialogs.AddToGroupDialog
 import org.videolan.vlc.gui.dialogs.SavePlaylistDialog
+import org.videolan.vlc.gui.dialogs.VLCBillingDialog
 import org.videolan.vlc.gui.dialogs.VideoTracksDialog
 import org.videolan.vlc.media.MediaUtils
 import org.videolan.vlc.providers.medialibrary.MedialibraryProvider
@@ -90,6 +93,7 @@ object UiTools {
     private val TAG = "VLC/UiTools"
     private var DEFAULT_COVER_VIDEO_DRAWABLE: BitmapDrawable? = null
     private var DEFAULT_COVER_AUDIO_DRAWABLE: BitmapDrawable? = null
+    private var DEFAULT_COVER_AUDIO_AUTO_DRAWABLE: BitmapDrawable? = null
     private var DEFAULT_COVER_ALBUM_DRAWABLE: BitmapDrawable? = null
     private var DEFAULT_COVER_ARTIST_DRAWABLE: BitmapDrawable? = null
     private var DEFAULT_COVER_MOVIE_DRAWABLE: BitmapDrawable? = null
@@ -119,6 +123,13 @@ object UiTools {
             DEFAULT_COVER_AUDIO_DRAWABLE = BitmapDrawable(context.resources, getBitmapFromDrawable(context, R.drawable.ic_no_song))
         }
         return DEFAULT_COVER_AUDIO_DRAWABLE!!
+    }
+
+    fun getDefaultAudioAutoDrawable(context: Context): BitmapDrawable {
+        if (DEFAULT_COVER_AUDIO_AUTO_DRAWABLE == null) {
+            DEFAULT_COVER_AUDIO_AUTO_DRAWABLE = BitmapDrawable(context.resources, getBitmapFromDrawable(context, R.drawable.ic_auto_nothumb))
+        }
+        return DEFAULT_COVER_AUDIO_AUTO_DRAWABLE!!
     }
 
     fun getDefaultFolderDrawable(context: Context): BitmapDrawable {
@@ -205,10 +216,14 @@ object UiTools {
         return DEFAULT_COVER_FOLDER_DRAWABLE_BIG!!
     }
 
+    private fun getSnackAnchorView(activity: Activity)=
+        if (activity is BaseActivity && activity.getSnackAnchorView() != null) activity.getSnackAnchorView() else activity.findViewById(android.R.id.content)
+
     /**
      * Print an on-screen message to alert the user
      */
-    fun snacker(view: View, stringId: Int) {
+    fun snacker(activity:Activity, stringId: Int) {
+        val view = getSnackAnchorView(activity) ?: return
         val snack = Snackbar.make(view, stringId, Snackbar.LENGTH_SHORT)
 //        snack.setAnchorView()
                 snack.show()
@@ -218,7 +233,8 @@ object UiTools {
      * Print an on-screen message to alert the user
      */
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    fun snacker(view: View, message: String) {
+    fun snacker(activity:Activity, message: String) {
+        val view = getSnackAnchorView(activity) ?: return
         val snack = Snackbar.make(view, message, Snackbar.LENGTH_SHORT)
         if (AndroidUtil.isLolliPopOrLater)
             snack.view.elevation = view.resources.getDimensionPixelSize(R.dimen.audio_player_elevation).toFloat()
@@ -229,7 +245,8 @@ object UiTools {
      * Print an on-screen message to alert the user, with undo action
      */
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    fun snackerConfirm(view: View, message: String, action: Runnable) {
+    fun snackerConfirm(activity:Activity, message: String, action: Runnable) {
+        val view = getSnackAnchorView(activity) ?: return
         val snack = Snackbar.make(view, message, Snackbar.LENGTH_LONG)
                 .setAction(R.string.ok) { action.run() }
         if (AndroidUtil.isLolliPopOrLater)
@@ -238,7 +255,8 @@ object UiTools {
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    fun CoroutineScope.snackerConfirm(view: View, message: String, action: suspend() -> Unit) {
+    fun CoroutineScope.snackerConfirm(activity:Activity, message: String, action: suspend() -> Unit) {
+        val view = getSnackAnchorView(activity) ?: return
         val snack = Snackbar.make(view, message, Snackbar.LENGTH_LONG)
                 .setAction(R.string.ok) { launch { action.invoke() } }
         if (AndroidUtil.isLolliPopOrLater)
@@ -251,7 +269,8 @@ object UiTools {
      * Print an on-screen message to alert the user, with undo action
      */
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    fun snackerWithCancel(view: View, message: String, action: Runnable?, cancelAction: Runnable?) {
+    fun snackerWithCancel(activity:Activity, message: String, action: Runnable?, cancelAction: Runnable?) {
+        val view = getSnackAnchorView(activity) ?: return
         @SuppressLint("WrongConstant") val snack = Snackbar.make(view, message, DELETE_DURATION)
                 .setAction(R.string.cancel) {
                     if (action != null)
@@ -297,10 +316,12 @@ object UiTools {
 
     fun fillAboutView(v: View) {
         val link = v.findViewById<TextView>(R.id.main_link)
-        link.text = Html.fromHtml(v.context.getString(R.string.about_link))
+        link.text = HtmlCompat.fromHtml(v.context.getString(R.string.about_link),
+            HtmlCompat.FROM_HTML_MODE_LEGACY)
 
         val feedback : TextView= v.findViewById(R.id.feedback)
-        feedback.text = Html.fromHtml(v.context.getString(R.string.feedback_link, v.context.getString(R.string.feedback_forum)))
+        feedback.text = HtmlCompat.fromHtml(v.context.getString(R.string.feedback_link,
+                v.context.getString(R.string.feedback_forum)), HtmlCompat.FROM_HTML_MODE_LEGACY)
         feedback.movementMethod = LinkMovementMethod.getInstance()
 
         val revision = v.context.getString(R.string.build_revision) + " VLC: " + v.context.getString(R.string.build_vlc_revision)
@@ -337,10 +358,8 @@ object UiTools {
     fun FragmentActivity.addToPlaylistAsync(parent: String, includeSubfolders: Boolean = false) {
         if (!isStarted()) return
         val savePlaylistDialog = SavePlaylistDialog()
-        val args = Bundle()
-        args.putString(SavePlaylistDialog.KEY_FOLDER, parent)
-        args.putBoolean(SavePlaylistDialog.KEY_SUB_FOLDERS, includeSubfolders)
-        savePlaylistDialog.arguments = args
+        savePlaylistDialog.arguments = bundleOf(SavePlaylistDialog.KEY_FOLDER to parent,
+                SavePlaylistDialog.KEY_SUB_FOLDERS to includeSubfolders)
         savePlaylistDialog.show(supportFragmentManager, "fragment_add_to_playlist")
     }
 
@@ -351,28 +370,31 @@ object UiTools {
     fun FragmentActivity.addToPlaylist(tracks: Array<MediaWrapper>, key: String) {
         if (!isStarted()) return
         val savePlaylistDialog = SavePlaylistDialog()
-        val args = Bundle()
-        args.putParcelableArray(key, tracks)
-        savePlaylistDialog.arguments = args
+        savePlaylistDialog.arguments = bundleOf(key to tracks)
         savePlaylistDialog.show(supportFragmentManager, "fragment_add_to_playlist")
     }
 
-    fun FragmentActivity.addToGroup(tracks: List<MediaWrapper>) {
+    fun FragmentActivity.addToGroup(tracks: List<MediaWrapper>, forbidNewGroup:Boolean , newGroupListener: ()->Unit) {
         if (!isStarted()) return
         val addToGroupDialog = AddToGroupDialog()
-        val args = Bundle()
-        args.putParcelableArray(AddToGroupDialog.KEY_TRACKS, tracks.toTypedArray())
-        addToGroupDialog.arguments = args
+        addToGroupDialog.arguments = bundleOf(AddToGroupDialog.KEY_TRACKS to tracks.toTypedArray(), AddToGroupDialog.FORBID_NEW_GROUP to forbidNewGroup)
         addToGroupDialog.show(supportFragmentManager, "fragment_add_to_group")
+        addToGroupDialog.newGroupListener = newGroupListener
     }
 
-    fun FragmentActivity.showVideoTrack(menuListener:(Int) -> Unit) {
+    fun FragmentActivity.showVideoTrack(menuListener:(Int) -> Unit, trackSelectionListener:(Int, VideoTracksDialog.TrackType) -> Unit) {
         if (!isStarted()) return
         val videoTracksDialog = VideoTracksDialog()
-        val args = Bundle()
-        videoTracksDialog.arguments = args
+        videoTracksDialog.arguments = bundleOf()
         videoTracksDialog.show(supportFragmentManager, "fragment_video_tracks")
         videoTracksDialog.menuItemListener = menuListener
+        videoTracksDialog.trackSelectionListener = trackSelectionListener
+    }
+
+    fun FragmentActivity.showDonations() {
+        if (!isStarted()) return
+        val videoTracksDialog = VLCBillingDialog()
+        videoTracksDialog.show(supportFragmentManager, "fragment_donations")
     }
 
     fun FragmentActivity.showMediaInfo(mediaWrapper: MediaWrapper) {
@@ -499,7 +521,7 @@ object UiTools {
                     .setCancelable(false)
                     .setMessage(message)
                     .setPositiveButton(R.string.ml_external_storage_accept) { _, _ ->
-                        ContextCompat.startForegroundService(activity, si)
+                        activity.launchForeground(activity, si)
                     }
                     .setNegativeButton(R.string.ml_external_storage_decline) { dialog, _ -> dialog.dismiss() }
             builder.show()
@@ -509,7 +531,7 @@ object UiTools {
                     .setCancelable(false)
                     .setMessage(message)
                     .setPositiveButton(R.string.ml_external_storage_accept) { _, _ ->
-                        ContextCompat.startForegroundService(activity, si)
+                        activity.launchForeground(activity, si)
                     }
                     .setNegativeButton(R.string.ml_external_storage_decline) { dialog, _ -> dialog.dismiss() }
             builder.show()
@@ -532,7 +554,7 @@ object UiTools {
                             if (item.uri != null)
                                 MediaUtils.openUri(activity, item.uri)
                             else if (item.text != null) {
-                                val uri = Uri.parse(item.text.toString())
+                                val uri = item.text.toString().toUri()
                                 val media = MLServiceLocator.getAbstractMediaWrapper(uri)
                                 if ("file" != uri.scheme)
                                     media.type = MediaWrapper.TYPE_STREAM
@@ -574,14 +596,14 @@ object UiTools {
         AlertDialog.Builder(context)
                 .setTitle(context.resources.getString(R.string.delete_sub_title))
                 .setMessage(context.resources.getString(R.string.delete_sub_message))
-                .setPositiveButton(R.string.delete_sub_yes, positiveListener)
-                .setNegativeButton(R.string.delete_sub_no, negativeListener)
+                .setPositiveButton(R.string.delete, positiveListener)
+                .setNegativeButton(R.string.cancel, negativeListener)
                 .create()
                 .show()
     }
 
     fun hasSecondaryDisplay(context: Context): Boolean {
-        val mediaRouter = context.getSystemService(Context.MEDIA_ROUTER_SERVICE) as MediaRouter
+        val mediaRouter = context.getSystemService<MediaRouter>()!!
         val route = mediaRouter.getSelectedRoute(MediaRouter.ROUTE_TYPE_LIVE_VIDEO)
         val presentationDisplay = route?.presentationDisplay
         return presentationDisplay != null
@@ -681,7 +703,8 @@ fun getTvIconRes(mediaLibraryItem: MediaLibraryItem) = when (mediaLibraryItem.it
         when (mw.type) {
             MediaWrapper.TYPE_VIDEO -> R.drawable.ic_browser_video_big_normal
             MediaWrapper.TYPE_DIR -> if (mw.uri.scheme == "file") R.drawable.ic_menu_folder_big else R.drawable.ic_menu_network_big
-            else -> R.drawable.ic_song_big
+            MediaWrapper.TYPE_AUDIO -> R.drawable.ic_song_big
+            else -> R.drawable.ic_browser_unknown_big_normal
         }
     }
     MediaLibraryItem.TYPE_DUMMY -> {
@@ -692,10 +715,11 @@ fun getTvIconRes(mediaLibraryItem: MediaLibraryItem) = when (mediaLibraryItem.it
             HEADER_SERVER -> R.drawable.ic_menu_network_add_big
             HEADER_STREAM -> R.drawable.ic_menu_stream_big
             HEADER_PLAYLISTS -> R.drawable.ic_menu_playlist_big
-            HEADER_MOVIES -> R.drawable.ic_browser_movie_big
+            HEADER_MOVIES, CATEGORY_NOW_PLAYING_PIP -> R.drawable.ic_browser_movie_big
             HEADER_TV_SHOW -> R.drawable.ic_browser_tvshow_big
             ID_SETTINGS -> R.drawable.ic_menu_preferences_big
             ID_ABOUT_TV, ID_LICENCE -> R.drawable.ic_default_cone
+            ID_SPONSOR -> R.drawable.ic_donate_big
             CATEGORY_ARTISTS -> R.drawable.ic_artist_big
             CATEGORY_ALBUMS -> R.drawable.ic_album_big
             CATEGORY_GENRES -> R.drawable.ic_genre_big

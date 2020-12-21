@@ -22,8 +22,7 @@ package org.videolan.vlc.providers
 
 import android.content.Context
 import android.hardware.usb.UsbDevice
-import android.net.Uri
-import android.text.TextUtils
+import androidx.core.net.toUri
 import androidx.lifecycle.Observer
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.ObsoleteCoroutinesApi
@@ -78,7 +77,7 @@ open class FileBrowserProvider(
             storageAccess = true
             val directory = MLServiceLocator.getAbstractMediaWrapper(AndroidUtil.PathToUri(mediaDirLocation))
             directory.type = MediaWrapper.TYPE_DIR
-            if (TextUtils.equals(AndroidDevices.EXTERNAL_PUBLIC_DIRECTORY, mediaDirLocation)) {
+            if (AndroidDevices.EXTERNAL_PUBLIC_DIRECTORY == mediaDirLocation) {
                 directory.setDisplayTitle(internalmemoryTitle)
                 storagePosition = devices.size
             } else {
@@ -94,7 +93,7 @@ open class FileBrowserProvider(
         }
         if (!storageAccess) return // For first launch, storage access may not already be granted
         if (AndroidUtil.isLolliPopOrLater && !ExternalMonitor.devices.isEmpty()) {
-            val otg = MLServiceLocator.getAbstractMediaWrapper(Uri.parse("otg://")).apply {
+            val otg = MLServiceLocator.getAbstractMediaWrapper("otg://".toUri()).apply {
                 title = context.getString(R.string.otg_device_title)
                 type = MediaWrapper.TYPE_DIR
             }
@@ -113,7 +112,7 @@ open class FileBrowserProvider(
         initBrowser()
         mediabrowser?.let {
             it.changeEventListener(eventListener)
-            if (url != null) it.browse(Uri.parse(url), getFlags(interact))
+            if (url != null) it.browse(url.toUri(), getFlags(interact))
         }
     }
 
@@ -123,10 +122,11 @@ open class FileBrowserProvider(
                 loading.postValue(true)
                 dataset.value = withContext(coroutineContextProvider.IO) {
                     @Suppress("UNCHECKED_CAST")
-                    getDocumentFiles(context, Uri.parse(url).path?.substringAfterLast(':') ?: "") as? MutableList<MediaLibraryItem> ?: mutableListOf()
+                    getDocumentFiles(context, url.toUri().path?.substringAfterLast(':') ?: "") as? MutableList<MediaLibraryItem> ?: mutableListOf()
                 }
                 loading.postValue(false)
             }
+            url == "root" -> launch { browseRootImpl() }
             else -> super.browse(url)
         }
     }
@@ -138,7 +138,7 @@ open class FileBrowserProvider(
                 launch {
                     val files = withContext(coroutineContextProvider.IO) {
                         @Suppress("UNCHECKED_CAST")
-                        getDocumentFiles(context, Uri.parse(url).path?.substringAfterLast(':')
+                        getDocumentFiles(context, url.toUri().path?.substringAfterLast(':')
                                 ?: "") as? MutableList<MediaLibraryItem> ?: mutableListOf()
                     }.map { it as MediaWrapper }
 
@@ -171,7 +171,7 @@ open class FileBrowserProvider(
                 otgPosition = -1
             }
         } else if (otgPosition == -1) {
-            val otg = MLServiceLocator.getAbstractMediaWrapper(Uri.parse("otg://")).apply {
+            val otg = MLServiceLocator.getAbstractMediaWrapper("otg://".toUri()).apply {
                 title = context.getString(R.string.otg_device_title)
                 type = MediaWrapper.TYPE_DIR
             }

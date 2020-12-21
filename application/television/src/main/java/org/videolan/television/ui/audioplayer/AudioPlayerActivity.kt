@@ -27,13 +27,11 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.support.v4.media.session.PlaybackStateCompat
-import android.text.TextUtils
 import android.view.InputDevice
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
 import androidx.databinding.DataBindingUtil
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.DividerItemDecoration
@@ -84,13 +82,13 @@ class AudioPlayerActivity : BaseTvActivity() {
         binding.playlist.adapter = adapter
         binding.lifecycleOwner = this
         binding.progress = model.progress
-        model.dataset.observe(this, Observer<List<MediaWrapper>> { mediaWrappers ->
+        model.dataset.observe(this, { mediaWrappers ->
             if (mediaWrappers != null) {
                 adapter.setSelection(-1)
                 adapter.update(mediaWrappers)
             }
         })
-        model.playerState.observe(this, Observer { playerState -> update(playerState) })
+        model.playerState.observe(this, { playerState -> update(playerState) })
         val position = intent.getIntExtra(MEDIA_POSITION, 0)
         if (intent.hasExtra(MEDIA_PLAYLIST))
             intent.getLongExtra(MEDIA_PLAYLIST, -1L).let { MediaUtils.openPlaylist(this, it) }
@@ -126,7 +124,7 @@ class AudioPlayerActivity : BaseTvActivity() {
                 R.drawable.ic_shuffle_on
             else
                 R.drawable.ic_shuffle)
-            if (mw == null || TextUtils.equals(currentCoverArt, mw.artworkMrl)) return@launch
+            if (mw == null || currentCoverArt == mw.artworkMrl) return@launch
             currentCoverArt = mw.artworkMrl
             updateBackground()
         }

@@ -1,3 +1,136 @@
+Changes between 3.3.3 Beta 4 and 3.3.3:
+------------------
+
+ * Fix scrolling issues
+ * Fix media not updated during a scan
+ * Fix the action button visibility
+ * Improve descriptions for Android Auto and streams
+ * Crash fixes
+
+Changes between 3.3.3 Beta 3 and 3.3.3 Beta 4:
+------------------
+
+ * Global audio delay for videos
+ * Addition of an option to browse the folder of a media
+ * TV : improve DPAD input in video player
+ * Improve descriptions for Android Auto and streams
+ * Fix default orientation for videos
+ * Allow favorites for UPNP servers
+ * A lot of UI fixes
+ * Crash fixes
+
+Changes between 3.3.2 and 3.3.3 Beta 3:
+------------------
+
+ * Remove a single media from history
+ * Android TV: fixes and improvements
+ * Fix audio thumbnails detection
+ * Fix DVD menu
+ * Update medialibrary
+ * Crash fixes
+
+Changes between 3.3.2 Beta 4 and 3.3.2:
+------------------
+
+none
+
+Changes between 3.3.2 Beta 3 and 3.3.2 Beta 4:
+------------------
+
+Application:
+ * SMB fixes
+ * Crash fixes
+
+Changes between 3.3.2 Beta 2 and 3.3.2 Beta 3:
+------------------
+
+Application:
+ * Android Auto new navigation
+ * Samba network fixes
+ * Video group improvements
+ * Fix playlist items remove
+ * Crash fixes
+
+Changes between 3.3.2 Beta 1 and 3.3.2 Beta 2:
+------------------
+
+Application:
+ * Video player: fix focus issue
+ * Video group improvements
+ * SMB fixes
+ * Android Auto improvements
+ * Fix picking subtitles for network videos
+ * Fix OTG
+ * Crash fixes
+
+Changes between 3.3.1 and 3.3.2 Beta 1:
+------------------
+
+Application:
+ * Allow adding multiple videos to a new group
+ * SMB fixes
+ * Fix landscape video orientation
+ * Fix progression save
+ * Fix subtitles picking on SD cards
+ * Android Auto improvements and fixes
+ * Crash fixes
+
+Changes between 3.3.1 Beta 2 and 3.3.1:
+------------------
+
+Application:
+ * Crash fixes
+
+Changes between 3.3.1 Beta 1 and 3.3.1 Beta 2:
+------------------
+
+Application:
+ * Crash fixes
+
+Changes between 3.3.0 and 3.3.1 Beta 1:
+------------------
+
+Application:
+ * Video: mark as played
+ * Audio: chapter selection for audio books
+ * TV: improve PiP behavior
+ * Video player: increase icons' size
+ * Thumbnails: fix quality issue
+ * Crash fixes
+
+Changes between 3.3.0-RC4 and 3.3.0:
+------------------
+
+Application:
+ * Fix streaming issues
+ * Bug fixes
+
+Changes between 3.3.0-RC3 and 3.3.0-RC4:
+------------------
+
+Application:
+ * Prevent unwanted notifications
+ * Fix some streams not playing
+ * Fix midi not considered as audio media
+ * Some UI fixes
+
+Changes between 3.3.0-beta-07 and 3.3.0-RC1:
+------------------
+
+Application:
+ * Sponsorship added. You can now support VLC Android!
+ * New UI for subtitles download
+ * New UI for subtitles picker
+
+Changes between 3.3.0-beta-06 and 3.3.0-beta-07:
+------------------
+
+Application:
+ * New Video Player UI
+ * UI fixes in the file browser
+ * Crash fixes
+
+
 Changes between 3.3.0-beta-04 and 3.3.0-beta-05:
 ------------------
 

@@ -127,8 +127,6 @@
     <string name="firstsong">Premier morceau de la liste de lecture</string>
     <string name="lastsong">Dernier morceau de la liste de lecture</string>
 
-    <string name="locked">Verrouillé</string>
-    <string name="unlocked">Déverrouillé</string>
     <string name="surface_best_fit">Ajuster au mieux</string>
     <string name="surface_fit_screen">Ajuster à l\'écran</string>
     <string name="surface_fill">Étirer</string>
@@ -148,9 +146,6 @@
     <string name="brightness">Luminosité</string>
     <string name="advanced">options avancées</string>
     <string name="audio_boost_warning">Défilez encore vers le haut pour dépasser 100 %</string>
-    <string name="locked_in_portrait_mode">Verrouillé en mode portrait\n(Appui long sur le bouton pour annuler)</string>
-    <string name="locked_in_landscape_mode">Verrouillé en mode paysage\n(Appui long sur le bouton pour annuler)</string>
-    <string name="reset_orientation">Orientation réinitialisée</string>
 
     <plurals name="track_channels_info_quantity">
         <item quantity="one">1 canal\n</item>
@@ -413,13 +408,11 @@
 
     <string name="delete_sub_title">Supprimer les sous-titres</string>
     <string name="delete_sub_message">Voulez-vous supprimer ces sous-titres ?</string>
-    <string name="delete_sub_yes">Oui</string>
-    <string name="delete_sub_no">Non</string>
     <string name="download_subtitle_title">Télécharger les sous-titres</string>
 
     <string name="no_result">Aucun résultat trouvé</string>
     <string name="no_internet_connection">Vérifiez votre connexion Internet</string>
-    <string name="some_error_occurred">Une erreur s’est produite. Veuillez réessayer dans quelques secondes</string>
+    <string name="subs_download_error">Service indisponible. Veuillez réessayer plus tard</string>
 
     <string name="network_browsing">Réseau local</string>
     <string name="browsing">Navigation</string>
@@ -509,7 +502,9 @@
     <string name="ml_external_storage_msg">Souhaitez-vous que VLC ajoute le périphérique %1$s à votre médiathèque ?</string>
     <string name="ml_external_storage_accept">Oui</string>
     <string name="ml_external_storage_decline">Non</string>
-    <string name="last_added_media">Derniers ajouts</string>
+    <string name="auto_last_added_media">Dernier ajout</string>
+    <string name="auto_my_library">Ma médiathèque</string>
+    <string name="auto_home">Accueil</string>
     <string name="no">Non</string>
     <string name="loading_medialibrary">Chargement de la médiathèque…</string>
     <string name="yes">Oui</string>
@@ -716,4 +711,54 @@
     <string name="group_similar">Regrouper automatiquement</string>
     <string name="no_favorite">Aucun favori</string>
     <string name="empty_directory">Vide</string>
+    <string name="no_track">Aucune piste</string>
+
+    <string name="swipe_unlock">Glisser pour déverrouiller</string>
+    <string name="swipe_unlock_no_touch">Longue pression pour débloquer</string>
+    <string name="sub_result_by_name">Résultats pour %s</string>
+    <string name="sub_result_by_name_season">Saison %s</string>
+    <string name="sub_result_by_name_episode">Épisode %s</string>
+
+    <string name="sub_result_by_file">Résultats pour votre fichier</string>
+    <string name="donate">Aider VLC</string>
+    <string name="donate_desc">Soutenez les bénévoles qui construisent VLC</string>
+    <string name="donate_subscribtion">Je souhaite que ce soit un financement mensuel</string>
+    <string name="donate_send">Démarrer votre financement</string>
+    <string name="donation_description">Votre financement nous permettra de :\nAméliorer l’application VLC pour Android\nSoutenir l’association VideoLAN</string>
+    <string name="subscription_purchased">Vous avez souscrit au financement mensuel</string>
+    <string name="subscription_cancel">Vous pouvez vous désinscrire dans le Play Store</string>
+    <string name="subscription_cancel_tv">Comment se désinscrire</string>
+    <string name="donate_unsubscribe_tv">Pour se désinscrire, veuillez ouvrir %s sur un téléphone ou un ordinateur ou scanner ce code :</string>
+    <string name="tip_jar">Aider VLC</string>
+    <string name="thank_you">Merci</string>
+    <string name="thank_you_desc">Merci pour votre financement !\nCela nous aidera beaucoup à améliorer VLC !</string>
+    <string name="donate_again">Financer l’application à nouveau</string>
+
+    <string name="mark_as_played">Marquer comme vu</string>
+    <string name="mark_all_as_played">Marquer tout comme vu</string>
+    <string name="new_group">Nouveau groupe</string>
+    <string name="new_group_desc">Créer un nouveau groupe</string>
+
+    <string name="air_action_rewind">Rembobiner 10s</string>
+    <string name="air_action_forward">Chercher 10s en avant</string>
+    <string name="air_action_play_pause">Pause/reprise de la lecture</string>
+    <string name="air_action_volume_up">Augmenter le volume</string>
+    <string name="air_action_volume_down">Baisser le volume</string>
+    <string name="air_action_next">Élément suivant en lecture</string>
+    <string name="air_action_previous">Élément précédent en lecture</string>
+    <string name="allow_otg">Autoriser l\'accès OTG</string>
+    <string name="allow_otg_description">Veuillez sélectionner votre périphérique OTG pour y autoriser l\'accès a VLC.</string>
+    <string name="timeout_infinite">Infini</string>
+    <string name="timeout_short">Court</string>
+    <string name="timeout_normal">Normal</string>
+    <string name="timeout_long">Long</string>
+    <string name="video_hud_timeout">Lecteur vidéo controle le délai de masquage</string>
+    <string name="remove_from_history">Retirer de l\'historique</string>
+    <string name="prefersmbv1">Préfère SMB 1</string>
+    <string name="prefersmbv1_summary">Décochez ce paramètre si vous avez des difficultés à naviguer sur votre serveur SMB</string>
+    <string name="apply_to_all">Appliquer à toutes les vidéos</string>
+    <string name="audio_delay_global">Délai audio défini à %sms pour toutes les vidéos</string>
+    <string name="warning_stream_speed">L\'augmentation de la vitesse de lecture au-dessus de 1 pour les flux peut provoquer des saccades.</string>
+    <string name="go_to_folder">Parcourir le parent</string>
+
 </resources>

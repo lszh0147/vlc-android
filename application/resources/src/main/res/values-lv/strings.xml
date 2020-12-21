@@ -121,8 +121,6 @@
     <string name="firstsong">Pirmo dziesmu atskaņošanas sarakstā</string>
     <string name="lastsong">Pēdējo dziesmu atskaņošanas sarakstā</string>
 
-    <string name="locked">Bloķēts</string>
-    <string name="unlocked">Atbloķēts</string>
     <string name="surface_best_fit">Labāk piemērots</string>
     <string name="surface_fit_screen">Ietilpināt ekrānā</string>
     <string name="surface_fill">Piepildīt</string>
@@ -310,8 +308,6 @@
     <string name="dump_logcat_success">Logcat veiksmīgi izgāza uz %1$s!</string>
     <string name="dump_logcat_failure">Neizdevās izgāzt logcat.</string>
     <string name="restart_vlc">Pārstartēt VLC</string>
-    <string name="delete_sub_yes">Jā</string>
-    <string name="delete_sub_no">Nē</string>
     <string name="no_result">Rezultātu nav</string>
     <string name="no_internet_connection">Pārbaudiet savu interneta savienojumu</string>
     <string name="browsing">Pārlūkot</string>
@@ -357,7 +353,6 @@
     <string name="length">Ilgums</string>
     <string name="ml_external_storage_accept">Jā</string>
     <string name="ml_external_storage_decline">Nē</string>
-    <string name="last_added_media">pēdējāis pievienotais</string>
     <string name="no">Nē</string>
     <string name="loading_medialibrary">Ielādē multivides bibliotēku...</string>
     <string name="yes">Jā</string>

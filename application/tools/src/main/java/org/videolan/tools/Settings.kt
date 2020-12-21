@@ -6,6 +6,8 @@ import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Build
 import android.telephony.TelephonyManager
+import androidx.core.content.edit
+import androidx.core.content.getSystemService
 import androidx.preference.PreferenceManager
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.ObsoleteCoroutinesApi
@@ -19,6 +21,7 @@ object Settings : SingletonHolder<SharedPreferences, Context>({ init(it.applicat
     var tvUI = false
     var listTitleEllipsize = 0
     var overrideTvUI = false
+    var videoHudDelay = 2
     lateinit var device : DeviceInfo
         private set
 
@@ -27,6 +30,7 @@ object Settings : SingletonHolder<SharedPreferences, Context>({ init(it.applicat
         showVideoThumbs = prefs.getBoolean(SHOW_VIDEO_THUMBNAILS, true)
         tvUI = prefs.getBoolean(PREF_TV_UI, false)
         listTitleEllipsize = prefs.getString(LIST_TITLE_ELLIPSIZE, "0")?.toInt() ?: 0
+        videoHudDelay = prefs.getString(VIDEO_HUD_TIMEOUT, "2")?.toInt() ?: 2
         device = DeviceInfo(context)
         return prefs
     }
@@ -78,6 +82,8 @@ const val LOGIN_STORE = "store_login"
 const val KEY_PLAYBACK_RATE = "playback_rate"
 const val KEY_PLAYBACK_SPEED_PERSIST = "playback_speed"
 const val KEY_VIDEO_APP_SWITCH = "video_action_switch"
+const val VIDEO_TRANSITION_SHOW = "video_transition_show"
+const val VIDEO_HUD_TIMEOUT = "video_hud_timeout"
 const val RESULT_RESCAN = Activity.RESULT_FIRST_USER + 1
 const val RESULT_RESTART = Activity.RESULT_FIRST_USER + 2
 const val RESULT_RESTART_APP = Activity.RESULT_FIRST_USER + 3
@@ -91,9 +97,11 @@ const val PLAYBACK_HISTORY = "playback_history"
 const val RESUME_PLAYBACK = "resume_playback"
 const val AUDIO_DUCKING = "audio_ducking"
 
+const val AUDIO_DELAY_GLOBAL = "audio_delay_global"
+
 class DeviceInfo(context: Context) {
     val pm = context.packageManager
-    val tm =context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+    val tm = context.getSystemService<TelephonyManager>()!!
     val isPhone = tm.phoneType != TelephonyManager.PHONE_TYPE_NONE
     val hasTsp = pm.hasSystemFeature("android.hardware.touchscreen")
     val isAndroidTv = pm.hasSystemFeature("android.software.leanback")
@@ -108,12 +116,12 @@ class DeviceInfo(context: Context) {
 
 fun SharedPreferences.putSingle(key: String, value: Any) {
     when(value) {
-        is Boolean -> edit().putBoolean(key, value).apply()
-        is Int -> edit().putInt(key, value).apply()
-        is Float -> edit().putFloat(key, value).apply()
-        is Long -> edit().putLong(key, value).apply()
-        is String -> edit().putString(key, value).apply()
-        is List<*> -> edit().putStringSet(key, value.toSet() as Set<String>).apply()
+        is Boolean -> edit { putBoolean(key, value) }
+        is Int -> edit { putInt(key, value) }
+        is Float -> edit { putFloat(key, value) }
+        is Long -> edit { putLong(key, value) }
+        is String -> edit { putString(key, value) }
+        is List<*> -> edit { putStringSet(key, value.toSet() as Set<String>) }
         else -> throw IllegalArgumentException("value class is invalid!")
     }
 }

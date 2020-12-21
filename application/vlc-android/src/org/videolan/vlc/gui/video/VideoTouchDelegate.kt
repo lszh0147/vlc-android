@@ -109,7 +109,7 @@ class VideoTouchDelegate(private val player: VideoPlayerActivity,
             }
             player.isPlaylistVisible -> {
                 touchAction = TOUCH_IGNORE
-                player.togglePlaylist()
+                player.overlayDelegate.togglePlaylist()
                 return true
             }
             else -> {
@@ -122,7 +122,7 @@ class VideoTouchDelegate(private val player: VideoPlayerActivity,
                 }
                 if (touchControls == 0 || player.isLocked) {
                     // locked or swipe disabled, only handle show/hide & ignore all actions
-                    if (event.action == MotionEvent.ACTION_UP && touchAction != TOUCH_IGNORE) player.toggleOverlay()
+                    if (event.action == MotionEvent.ACTION_UP && touchAction != TOUCH_IGNORE) player.overlayDelegate.toggleOverlay()
                     return false
                 }
 
@@ -232,6 +232,7 @@ class VideoTouchDelegate(private val player: VideoPlayerActivity,
                                 player.doPlayPause()
                             } else {
                                 val range = (if (screenConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) screenConfig.xRange else screenConfig.yRange).toFloat()
+                                if (BuildConfig.DEBUG) Log.d("VideoTouchDelegate", "Landscape: ${screenConfig.orientation == Configuration.ORIENTATION_LANDSCAPE} range: $range eventx: ${event.x}")
                                 when {
                                     event.x < range / 4f -> seekDelta(-10000)
                                     event.x > range * 0.75 -> seekDelta(10000)
@@ -286,7 +287,7 @@ class VideoTouchDelegate(private val player: VideoPlayerActivity,
                 player.volume = player.audiomanager.getStreamVolume(AudioManager.STREAM_MUSIC).toFloat()
                 val delta = -(rz / 7 * player.audioMax).toInt()
                 val vol = (player.volume.toInt() + delta).coerceIn(0, player.audioMax)
-                player.setAudioVolume(vol)
+                player.setAudioVolume(vol, true)
             }
             lastMove = System.currentTimeMillis()
         }
@@ -314,7 +315,7 @@ class VideoTouchDelegate(private val player: VideoPlayerActivity,
             if (brightness) doBrightnessTouch(y_changed)
             else doVolumeTouch(y_changed)
         }
-        player.hideOverlay(true)
+        player.overlayDelegate.hideOverlay(true)
     }
 
     private fun doSeekTouch(coef: Int, gesturesize: Float, seek: Boolean) {
@@ -340,12 +341,12 @@ class VideoTouchDelegate(private val player: VideoPlayerActivity,
         if (seek && length > 0) player.seek(time + jump, length)
 
         //Show the jump's size
-        if (length > 0) player.showInfo(String.format("%s%s (%s)%s",
+        if (length > 0) player.overlayDelegate.showInfo(String.format("%s%s (%s)%s",
                 if (jump >= 0) "+" else "",
                 Tools.millisToString(jump.toLong()),
                 Tools.millisToString(time + jump),
                 if (coef > 1) String.format(" x%.1g", 1.0 / coef) else ""), 50)
-        else player.showInfo(org.videolan.vlc.R.string.unseekable_stream, 1000)
+        else player.overlayDelegate.showInfo(R.string.unseekable_stream, 1000)
     }
 
     private fun doVolumeTouch(y_changed: Float) {
@@ -360,14 +361,14 @@ class VideoTouchDelegate(private val player: VideoPlayerActivity,
                 if (player.isAudioBoostEnabled) {
                     if (player.originalVol < audioMax) {
                         player.displayWarningToast()
-                        player.setAudioVolume(audioMax)
+                        player.setAudioVolume(audioMax, true)
                     } else {
-                        player.setAudioVolume(vol)
+                        player.setAudioVolume(vol, true)
                     }
                     touchAction = TOUCH_VOLUME
                 }
             } else {
-                player.setAudioVolume(vol)
+                player.setAudioVolume(vol, true)
                 touchAction = TOUCH_VOLUME
             }
         }
@@ -514,11 +515,8 @@ class VideoTouchDelegate(private val player: VideoPlayerActivity,
                 val cx = if (seekForward) container.width * 2 else -container.width
                 val cy = container.height / 2
                 animatorSet = AnimatorSet()
-                val circularReveal = CircularRevealCompat.createCircularReveal(container, cx.toFloat(), cy.toFloat(), 0F, container.width.toFloat() * 2)
-                val backgroundColorAnimator = ObjectAnimator.ofObject(container,
-                        CircularRevealWidget.CircularRevealScrimColorProperty.CIRCULAR_REVEAL_SCRIM_COLOR.name,
-                        ArgbEvaluator(),
-                        Color.TRANSPARENT, ContextCompat.getColor(player, R.color.ripple_white), Color.TRANSPARENT)
+                val backgroundColorAnimator = CircularRevealCompat.createCircularReveal(container, cx.toFloat(), cy.toFloat(), 0F, container.width.toFloat() * 2)
+                backgroundColorAnimator.duration = 750
 
                 val containerBackgroundAnim = ObjectAnimator.ofFloat(containerBackground, "alpha", 0f, 1f)
                 containerBackgroundAnim.duration = 300
@@ -529,7 +527,6 @@ class VideoTouchDelegate(private val player: VideoPlayerActivity,
                 val anims: ArrayList<Animator> = arrayListOf(firstImageAnim, secondImageAnim)
                 if (!isTv) {
                     anims.add(backgroundColorAnimator)
-                    anims.add(circularReveal)
                 }
                 if (!seekAnimRunning) {
                     anims.add(containerBackgroundAnim)
@@ -557,7 +554,9 @@ class VideoTouchDelegate(private val player: VideoPlayerActivity,
                 player.handler.removeMessages(VideoPlayerActivity.HIDE_SEEK)
                 player.handler.sendEmptyMessageDelayed(VideoPlayerActivity.HIDE_SEEK, SEEK_TIMEOUT)
 
-                container.visibility = View.VISIBLE
+                if (!isTv) {
+                    container.visibility = View.VISIBLE
+                }
                 seekAnimatorSet.start()
             }
             textView.text = sb.toString()

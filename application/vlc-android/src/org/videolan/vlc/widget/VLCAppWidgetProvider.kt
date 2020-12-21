@@ -35,6 +35,7 @@ import android.util.DisplayMetrics
 import android.view.View
 import android.view.WindowManager
 import android.widget.RemoteViews
+import androidx.core.content.getSystemService
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.ObsoleteCoroutinesApi
 import org.videolan.resources.*
@@ -115,10 +116,10 @@ abstract class VLCAppWidgetProvider : AppWidgetProvider() {
             }
             ACTION_WIDGET_UPDATE_COVER == action -> {
                 val artworkMrl = intent.getStringExtra("artworkMrl")
-                if (!TextUtils.isEmpty(artworkMrl)) {
+                if (!artworkMrl.isNullOrEmpty()) {
                     runIO(Runnable {
                         val cover = AudioUtil.readCoverBitmap(Uri.decode(artworkMrl), 320)
-                        val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+                        val wm = context.getSystemService<WindowManager>()!!
                         val dm = DisplayMetrics().also { wm.defaultDisplay.getMetrics(it) }
                         runOnMainThread(Runnable {
                             if (cover != null) {

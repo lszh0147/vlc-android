@@ -33,9 +33,9 @@ import android.os.Binder
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
-import android.text.TextUtils
 import android.util.Log
-import androidx.core.content.ContextCompat
+import androidx.core.content.getSystemService
+import androidx.core.net.toUri
 import androidx.lifecycle.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ActorScope
@@ -49,6 +49,7 @@ import org.videolan.medialibrary.interfaces.Medialibrary
 import org.videolan.medialibrary.stubs.StubMedialibrary
 import org.videolan.resources.*
 import org.videolan.resources.util.dbExists
+import org.videolan.resources.util.launchForeground
 import org.videolan.tools.*
 //import org.videolan.vlc.gui.SendCrashActivity
 import org.videolan.vlc.gui.helpers.NotificationHelper
@@ -83,7 +84,6 @@ class MediaParsingService : LifecycleService(), DevicesDiscoveryCb {
     private var serviceLock = false
     @Volatile
     private var discoverTriggered = false
-    internal val sb = StringBuilder()
     private lateinit var actions : SendChannel<MLAction>
     private lateinit var notificationActor : SendChannel<Notification>
 
@@ -129,11 +129,11 @@ class MediaParsingService : LifecycleService(), DevicesDiscoveryCb {
         filter.addAction(ACTION_PAUSE_SCAN)
         filter.addAction(ACTION_RESUME_SCAN)
         registerReceiver(receiver, filter)
-        val pm = applicationContext.getSystemService(Context.POWER_SERVICE) as PowerManager
+        val pm = applicationContext.getSystemService<PowerManager>()!!
         wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "VLC:MediaParsigService")
 
         if (lastNotificationTime == 5L) stopService(Intent(applicationContext, MediaParsingService::class.java))
-        Medialibrary.getState().observe(this, Observer<Boolean> { running ->
+        Medialibrary.getState().observe(this, { running ->
             if (!running && !scanPaused) {
                 exitCommand()
             }
@@ -197,7 +197,7 @@ class MediaParsingService : LifecycleService(), DevicesDiscoveryCb {
     }
 
     private fun discoverStorage(path: String) {
-        if (TextUtils.isEmpty(path)) {
+        if (path.isEmpty()) {
             exitCommand()
             return
         }
@@ -206,7 +206,7 @@ class MediaParsingService : LifecycleService(), DevicesDiscoveryCb {
     }
 
     private fun discover(path: String) {
-        if (TextUtils.isEmpty(path)) {
+        if (path.isEmpty()) {
             exitCommand()
             return
         }
@@ -223,7 +223,7 @@ class MediaParsingService : LifecycleService(), DevicesDiscoveryCb {
         for (storagePath in AndroidDevices.externalStorageDirectories) {
             if (path.startsWith(storagePath)) {
                 val uuid = FileUtils.getFileNameFromPath(path)
-                if (TextUtils.isEmpty(uuid)) {
+                if (uuid.isEmpty()) {
                     exitCommand()
                     return
                 }
@@ -236,7 +236,7 @@ class MediaParsingService : LifecycleService(), DevicesDiscoveryCb {
 
     private fun reload(path: String?) {
         if (reload > 0) return
-        if (TextUtils.isEmpty(path)) medialibrary.reload()
+        if (path.isNullOrEmpty()) medialibrary.reload()
         else medialibrary.reload(path)
     }
 
@@ -260,9 +260,9 @@ class MediaParsingService : LifecycleService(), DevicesDiscoveryCb {
         val devices = DirectoryRepository.getInstance(context).getMediaDirectories()
         val knownDevices = if (AndroidDevices.watchDevices) medialibrary.devices else null
         for (device in devices) {
-            val isMainStorage = TextUtils.equals(device, AndroidDevices.EXTERNAL_PUBLIC_DIRECTORY)
+            val isMainStorage = device == AndroidDevices.EXTERNAL_PUBLIC_DIRECTORY
             val uuid = FileUtils.getFileNameFromPath(device)
-            if (TextUtils.isEmpty(device) || TextUtils.isEmpty(uuid) || !device.scanAllowed()) continue
+            if (device.isEmpty() || uuid.isEmpty() || !device.scanAllowed()) continue
 
             val isNewForML =  !medialibrary.isDeviceKnown(if (isMainStorage) "main-storage" else uuid, device, !isMainStorage)
             val isNew = (isMainStorage || (addExternal && knownDevices?.contains(device) != true))
@@ -329,7 +329,8 @@ class MediaParsingService : LifecycleService(), DevicesDiscoveryCb {
             if (isNew) showStorageNotification(device)
         }
         withContext(Dispatchers.IO) { for (device in missingDevices) {
-            val uri = Uri.parse(device)
+            val uri = device.toUri()
+            Log.i("MediaParsingService", "Storage management: storage missing: ${uri.path}")
             medialibrary.removeDevice(uri.lastPathSegment, uri.path)
         } }
         serviceLock = false
@@ -341,13 +342,11 @@ class MediaParsingService : LifecycleService(), DevicesDiscoveryCb {
         if (lastNotificationTime == -1L || currentTime - lastNotificationTime < NOTIFICATION_DELAY) return
         lastNotificationTime = currentTime
         val discovery = withContext(Dispatchers.Default) {
-            sb.setLength(0)
-            when {
-                parsing > 0 -> sb.append(getString(R.string.ml_parse_media)).append(' ').append(parsing).append("%")
-                currentDiscovery != null -> sb.append(getString(R.string.ml_discovering)).append(' ').append(Uri.decode(currentDiscovery?.removeFileProtocole()))
-                else -> sb.append(getString(R.string.ml_parse_media))
+            val progressText = when {
+                parsing > 0 -> getString(R.string.ml_parse_media) + " " + parsing + "%"
+                currentDiscovery != null -> getString(R.string.ml_discovering) + " " + Uri.decode(currentDiscovery?.removeFileProtocole())
+                else -> getString(R.string.ml_parse_media)
             }
-            val progressText = sb.toString()
             if (!isActive) return@withContext ""
             if (lastNotificationTime != -1L) {
                 try {
@@ -389,12 +388,12 @@ class MediaParsingService : LifecycleService(), DevicesDiscoveryCb {
 
     override fun onReloadStarted(entryPoint: String) {
         if (BuildConfig.DEBUG) Log.v(TAG, "onReloadStarted: $entryPoint")
-        if (TextUtils.isEmpty(entryPoint)) ++reload
+        if (entryPoint.isEmpty()) ++reload
     }
 
     override fun onReloadCompleted(entryPoint: String) {
         if (BuildConfig.DEBUG) Log.v(TAG, "onReloadCompleted $entryPoint")
-        if (TextUtils.isEmpty(entryPoint)) --reload
+        if (entryPoint.isEmpty()) --reload
         if (reload <= 0) exitCommand()
     }
 
@@ -509,11 +508,11 @@ class MediaParsingService : LifecycleService(), DevicesDiscoveryCb {
 data class ScanProgress(val parsing: Int, val discovery: String)
 
 fun Context.reloadLibrary() {
-    ContextCompat.startForegroundService(this, Intent(ACTION_RELOAD, null, this, MediaParsingService::class.java))
+    launchForeground(this, Intent(ACTION_RELOAD, null, this, MediaParsingService::class.java))
 }
 
 fun Context.rescan() {
-    ContextCompat.startForegroundService(this, Intent(ACTION_FORCE_RELOAD, null, this, MediaParsingService::class.java))
+    launchForeground(this, Intent(ACTION_FORCE_RELOAD, null, this, MediaParsingService::class.java))
 }
 
 private sealed class MLAction

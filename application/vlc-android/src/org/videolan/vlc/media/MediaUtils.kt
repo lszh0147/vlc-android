@@ -7,7 +7,6 @@ import android.content.Intent
 import android.net.Uri
 import android.provider.MediaStore
 import android.provider.OpenableColumns
-import android.text.TextUtils
 import androidx.annotation.WorkerThread
 import androidx.appcompat.app.AppCompatActivity
 import androidx.collection.SimpleArrayMap
@@ -42,6 +41,8 @@ import org.videolan.vlc.providers.medialibrary.MedialibraryProvider
 import org.videolan.vlc.providers.medialibrary.VideoGroupsProvider
 import org.videolan.vlc.util.FileUtils
 import org.videolan.vlc.util.Permissions
+import org.videolan.vlc.util.generateResolutionClass
+import org.videolan.vlc.util.isSchemeStreaming
 import java.io.File
 import java.util.*
 import kotlin.collections.ArrayList
@@ -55,7 +56,7 @@ private typealias MediaContentResolver = SimpleArrayMap<String, IMediaContentRes
 @ExperimentalCoroutinesApi
 object MediaUtils {
     fun getSubs(activity: FragmentActivity, mediaList: List<MediaWrapper>) {
-        if (activity is AppCompatActivity) showSubtitleDownloaderDialogFragment(activity, mediaList.map { it.uri })
+        if (activity is AppCompatActivity) showSubtitleDownloaderDialogFragment(activity, mediaList.map { it.uri }, mediaList.map { it.title })
         else {
             val intent = Intent(activity, DialogActivity::class.java).setAction(DialogActivity.KEY_SUBS_DL)
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -67,9 +68,9 @@ object MediaUtils {
 
     fun getSubs(activity: FragmentActivity, media: MediaWrapper) = getSubs(activity, listOf(media))
 
-    fun showSubtitleDownloaderDialogFragment(activity: FragmentActivity, mediaUris: List<Uri>) {
+    fun showSubtitleDownloaderDialogFragment(activity: FragmentActivity, mediaUris: List<Uri>, mediaTitles:List<String>) {
         val callBack = java.lang.Runnable {
-            SubtitleDownloaderDialogFragment.newInstance(mediaUris).show(activity.supportFragmentManager, "Subtitle_downloader")
+            SubtitleDownloaderDialogFragment.newInstance(mediaUris, mediaTitles).show(activity.supportFragmentManager, "Subtitle_downloader")
         }
         if (Permissions.canWriteStorage()) callBack.run()
         else Permissions.askWriteStoragePermission(activity, false, callBack)
@@ -249,7 +250,7 @@ object MediaUtils {
                     while (index < count) {
                         val pageCount = min(MEDIALIBRARY_PAGE_SIZE, count - index)
                         val list = withContext(Dispatchers.IO) {
-                            provider.getPage(pageCount, index).toList()
+                            provider.getPage(pageCount, index).toList() as List<MediaWrapper>
                         }
                         if (index == 0) play(list)
                         else service.append(list)
@@ -326,27 +327,71 @@ object MediaUtils {
         }
     }
 
-    fun getMediaArtist(ctx: Context, media: MediaWrapper?) = media?.artist
-            ?: if (media?.nowPlaying != null) "" else getMediaString(ctx, R.string.unknown_artist)
+    fun getMediaArtist(ctx: Context, media: MediaWrapper?): String = when {
+        media == null -> getMediaString(ctx, R.string.unknown_artist)
+        media.type == MediaWrapper.TYPE_VIDEO -> ""
+        media.artist != null -> media.artist
+        media.nowPlaying != null -> media.title
+        isSchemeStreaming(media.uri.scheme) -> ""
+        else -> getMediaString(ctx, R.string.unknown_artist)
+    }
 
     fun getMediaReferenceArtist(ctx: Context, media: MediaWrapper?) = getMediaArtist(ctx, media)
 
     fun getMediaAlbumArtist(ctx: Context, media: MediaWrapper?) = media?.albumArtist
             ?: getMediaString(ctx, R.string.unknown_artist)
 
-    fun getMediaAlbum(ctx: Context, media: MediaWrapper?) = media?.album
-            ?: if (media?.nowPlaying != null) "" else getMediaString(ctx, R.string.unknown_album)
+    fun getMediaAlbum(ctx: Context, media: MediaWrapper?): String = when {
+        media == null -> getMediaString(ctx, R.string.unknown_album)
+        media.album != null -> media.album
+        media.nowPlaying != null -> ""
+        isSchemeStreaming(media.uri.scheme) -> ""
+        else -> getMediaString(ctx, R.string.unknown_album)
+    }
 
     fun getMediaGenre(ctx: Context, media: MediaWrapper?) = media?.genre
             ?: getMediaString(ctx, R.string.unknown_genre)
 
     fun getMediaSubtitle(media: MediaWrapper): String? {
-        var subtitle = media.nowPlaying ?: media.artist
+        var subtitle = when {
+            media.type == MediaWrapper.TYPE_VIDEO -> ""
+            media.length > 0L -> media.artist
+            isSchemeStreaming(media.uri.scheme) -> media.uri.toString()
+            else -> media.artist
+        }
         if (media.length > 0L) {
-            subtitle = if (TextUtils.isEmpty(subtitle)) Tools.millisToString(media.length)
-            else "$subtitle  •  ${Tools.millisToString(media.length)}"
+            if (media.type == MediaWrapper.TYPE_VIDEO) {
+                subtitle = Tools.millisToText(media.length)
+                val resolution = generateResolutionClass(media.width, media.height)
+                if (resolution != null) subtitle = "$subtitle  •  $resolution"
+            } else {
+                subtitle = if (subtitle.isNullOrEmpty()) Tools.millisToString(media.length)
+                else "$subtitle  •  ${Tools.millisToString(media.length)}"
+            }
         }
         return subtitle
+    }
+
+    fun getMediaDescription(artist: String?, album: String?): String {
+        val hasArtist = !artist.isNullOrEmpty()
+        val hasAlbum = !album.isNullOrEmpty()
+        if (!hasAlbum && !hasArtist) return ""
+        val contentBuilder = StringBuilder(artist ?: "")
+        if (hasArtist && hasAlbum) contentBuilder.append(" - ")
+        if (hasAlbum) contentBuilder.append(album)
+        return contentBuilder.toString()
+    }
+
+    fun getDisplaySubtitle(ctx: Context, media: MediaWrapper, mediaPosition: Int, mediaSize: Int): String {
+        val sb = StringBuilder()
+        if (mediaSize > 1) sb.append("${mediaPosition + 1} / $mediaSize")
+        val artist = getMediaArtist(ctx, media)
+        val album = getMediaAlbum(ctx, media)
+        val desc = if (artist != getMediaString(ctx, R.string.unknown_artist) && album != getMediaString(ctx, R.string.unknown_album))
+            getMediaDescription(artist, album) else ""
+        sb.append(if (desc.isNotEmpty()) (if (sb.isNotEmpty()) " • $desc" else desc) else "")
+        //Replace full-spaces with thin-spaces (Unicode 2009)
+        return sb.toString().replace(" ", "\u2009")
     }
 
     fun getMediaTitle(mediaWrapper: MediaWrapper) = mediaWrapper.title
@@ -538,7 +583,7 @@ fun List<Folder>.getAll(type: Int = Folder.TYPE_FOLDER_VIDEO, sort: Int = Medial
 private fun Array<MediaLibraryItem>.toList() = flatMap {
     if (it is VideoGroup) {
         it.media(Medialibrary.SORT_DEFAULT, false, it.mediaCount(), 0).toList()
-    } else listOf(this as MediaWrapper)
+    } else listOf(it as MediaWrapper)
 }
 
 fun MediaContentResolver.canHandle(id: String) : Boolean {

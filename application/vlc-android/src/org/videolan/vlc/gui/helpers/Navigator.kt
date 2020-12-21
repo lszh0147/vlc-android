@@ -27,16 +27,19 @@ import android.content.*
 import android.os.Bundle
 import android.os.IBinder
 import android.view.MenuItem
+import androidx.coordinatorlayout.widget.CoordinatorLayout
+import androidx.core.content.edit
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
+import com.google.android.material.appbar.AppBarLayout
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.ObsoleteCoroutinesApi
 import org.videolan.resources.*
-import org.videolan.tools.Settings
 import org.videolan.tools.isStarted
 import org.videolan.tools.putSingle
 import org.videolan.vlc.BuildConfig
@@ -52,7 +55,6 @@ import org.videolan.vlc.gui.browser.MainBrowserFragment
 import org.videolan.vlc.gui.browser.NetworkBrowserFragment
 import org.videolan.vlc.gui.preferences.PreferencesActivity
 import org.videolan.vlc.gui.video.VideoGridFragment
-import org.videolan.vlc.viewmodels.mobile.VideoGroupingType
 
 private const val TAG = "Navigator"
 @ObsoleteCoroutinesApi
@@ -67,6 +69,7 @@ class Navigator : BottomNavigationView.OnNavigationItemSelectedListener, Lifecyc
     private lateinit var settings: SharedPreferences
     private var extensionsService: ExtensionManagerService? = null
     override lateinit var navigationView: BottomNavigationView
+    override lateinit var appbarLayout: AppBarLayout
 
     override lateinit var extensionsManager: ExtensionsManager
     override var extensionServiceConnection: ServiceConnection? = null
@@ -83,6 +86,7 @@ class Navigator : BottomNavigationView.OnNavigationItemSelectedListener, Lifecyc
         }
         lifecycle.addObserver(this@Navigator)
         navigationView = findViewById(R.id.navigation)
+        appbarLayout = findViewById(R.id.appbar)
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_START)
@@ -110,7 +114,6 @@ class Navigator : BottomNavigationView.OnNavigationItemSelectedListener, Lifecyc
             R.id.nav_audio -> AudioBrowserFragment()
             R.id.nav_directories -> MainBrowserFragment()
             R.id.nav_playlists -> PlaylistFragment()
-            R.id.nav_network -> NetworkBrowserFragment()
             R.id.nav_more -> MoreFragment()
             else -> VideoGridFragment()
         }
@@ -174,6 +177,8 @@ class Navigator : BottomNavigationView.OnNavigationItemSelectedListener, Lifecyc
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         val id = item.itemId
         val current = currentFragment
+
+        appbarLayout.setExpanded(true, true)
         if (item.groupId == R.id.extensions_group) {
             if (currentFragmentId == id) {
                 clearBackstackFromClass(ExtensionBrowser::class.java)
@@ -211,11 +216,8 @@ class Navigator : BottomNavigationView.OnNavigationItemSelectedListener, Lifecyc
             (currentFragment as ExtensionBrowser).doRefresh(title, items)
         } else {
             val fragment = ExtensionBrowser()
-            fragment.arguments =  Bundle().apply {
-                putParcelableArrayList(ExtensionBrowser.KEY_ITEMS_LIST, ArrayList(items))
-                putBoolean(ExtensionBrowser.KEY_SHOW_FAB, showParams)
-                putString(ExtensionBrowser.KEY_TITLE, title)
-            }
+            fragment.arguments = bundleOf(ExtensionBrowser.KEY_ITEMS_LIST to ArrayList(items),
+                ExtensionBrowser.KEY_SHOW_FAB to showParams, ExtensionBrowser.KEY_TITLE to title)
             extensionsService?.let { fragment.setExtensionService(it) }
             when {
                 currentFragment !is ExtensionBrowser -> //case: non-extension to extension root
@@ -243,7 +245,7 @@ class Navigator : BottomNavigationView.OnNavigationItemSelectedListener, Lifecyc
                     if (current != null) current.isChecked = false
                     target.isChecked = true
                     /* Save the tab status in pref */
-                    settings.edit().putInt("fragment_id", id).apply()
+                    settings.edit { putInt("fragment_id", id) }
                 }
             }
         }
@@ -303,6 +305,7 @@ class Navigator : BottomNavigationView.OnNavigationItemSelectedListener, Lifecyc
 
 interface INavigator {
     var navigationView: BottomNavigationView
+    var appbarLayout: AppBarLayout
     var currentFragmentId : Int
 
 

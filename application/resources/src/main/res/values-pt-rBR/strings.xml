@@ -127,8 +127,6 @@
     <string name="firstsong">Primeira música da lista de reprodução</string>
     <string name="lastsong">Última música da lista de reprodução</string>
 
-    <string name="locked">Bloqueado</string>
-    <string name="unlocked">Desbloqueado</string>
     <string name="surface_best_fit">Melhor enquadramento</string>
     <string name="surface_fit_screen">Ajustar à tela</string>
     <string name="surface_fill">Preencher</string>
@@ -148,9 +146,6 @@
     <string name="brightness">Brilho</string>
     <string name="advanced">opções avançadas</string>
     <string name="audio_boost_warning">Reescala para ir além de 100%</string>
-    <string name="locked_in_portrait_mode">Bloqueado em modo retrato\n(Pressione e segure o botão para cancelar)</string>
-    <string name="locked_in_landscape_mode">Bloqueado em modo paisagem\n(Pressione e segure para cancelar)</string>
-    <string name="reset_orientation">Redefinir a orientação</string>
 
     <plurals name="track_channels_info_quantity">
         <item quantity="one">1 canal\n</item>
@@ -413,13 +408,11 @@
 
     <string name="delete_sub_title">Excluir legenda</string>
     <string name="delete_sub_message">Deseja excluir esta legenda?</string>
-    <string name="delete_sub_yes">Sim</string>
-    <string name="delete_sub_no">Não</string>
     <string name="download_subtitle_title">Baixar Legenda</string>
 
     <string name="no_result">Nenhum resultado encontrado</string>
     <string name="no_internet_connection">Verifique a sua conexão com a Internet</string>
-    <string name="some_error_occurred">Ocorreu um erro. Por favor, tente novamente em alguns instantes</string>
+    <string name="subs_download_error">Serviço indisponível. Por favor, tente novamente mais tarde</string>
 
     <string name="network_browsing">Rede</string>
     <string name="browsing">Procurando</string>
@@ -509,7 +502,9 @@
     <string name="ml_external_storage_msg">Deseja que o VLC adicione o dispositivo %1$s à sua biblioteca de mídias?</string>
     <string name="ml_external_storage_accept">Sim</string>
     <string name="ml_external_storage_decline">Não</string>
-    <string name="last_added_media">último adicionado</string>
+    <string name="auto_last_added_media">Último adicionado</string>
+    <string name="auto_my_library">Minha biblioteca</string>
+    <string name="auto_home">Início</string>
     <string name="no">Não</string>
     <string name="loading_medialibrary">Carregando Biblioteca de Mídias...</string>
     <string name="yes">Sim</string>
@@ -716,4 +711,54 @@
     <string name="group_similar">Reagrupar automaticamente</string>
     <string name="no_favorite">Nenhum favorito</string>
     <string name="empty_directory">Vazio</string>
+    <string name="no_track">Nenhuma trilha</string>
+
+    <string name="swipe_unlock">Deslize para liberar</string>
+    <string name="swipe_unlock_no_touch">Pressione e segure para liberar</string>
+    <string name="sub_result_by_name">Resultados para %s</string>
+    <string name="sub_result_by_name_season">Temporada %s</string>
+    <string name="sub_result_by_name_episode">Episódio %s</string>
+
+    <string name="sub_result_by_file">Resultados para o seu arquivo</string>
+    <string name="donate">Ajude o VLC</string>
+    <string name="donate_desc">Ajude os voluntários que fazem o VLC</string>
+    <string name="donate_subscribtion">Eu gostaria que esse patrocínio fosse mensal</string>
+    <string name="donate_send">Comece o seu patrocínio</string>
+    <string name="donation_description">Seu patrocínio nos permitirá:\nMelhorar o aplicativo VLC para Android\nAjude a organização VideoLAN</string>
+    <string name="subscription_purchased">Você está inscrito em um patrocínio mensal</string>
+    <string name="subscription_cancel">Você pode se desinscrever na Play Store</string>
+    <string name="subscription_cancel_tv">Como se desinscrever</string>
+    <string name="donate_unsubscribe_tv">Para se desinscrever, por favor abra o %s em um telefone ou um computador, ou escaneie este código:</string>
+    <string name="tip_jar">Ajude o VLC</string>
+    <string name="thank_you">Obrigado</string>
+    <string name="thank_you_desc">Obrigado pelo seu patrocínio!\nEle nos ajudará muito a melhorar o VLC!</string>
+    <string name="donate_again">Patrocinar o aplicativo novamente</string>
+
+    <string name="mark_as_played">Marcar como reproduzido</string>
+    <string name="mark_all_as_played">Marcar todos como reproduzidos</string>
+    <string name="new_group">Novo grupo</string>
+    <string name="new_group_desc">Criar um novo grupo</string>
+
+    <string name="air_action_rewind">Retroceder 10 seg.</string>
+    <string name="air_action_forward">Pesquisar avançando 10 seg.</string>
+    <string name="air_action_play_pause">Pausar/Retomar a reprodução</string>
+    <string name="air_action_volume_up">Aumentar volume</string>
+    <string name="air_action_volume_down">Diminuir o volume</string>
+    <string name="air_action_next">Próximo item da reprodução</string>
+    <string name="air_action_previous">Item anterior da reprodução</string>
+    <string name="allow_otg">Permitir acesso OTG</string>
+    <string name="allow_otg_description">Por favor, selecione sua unidade OTG para permitir acesso ao VLC.</string>
+    <string name="timeout_infinite">Infinito</string>
+    <string name="timeout_short">Curto</string>
+    <string name="timeout_normal">Normal</string>
+    <string name="timeout_long">Extenso</string>
+    <string name="video_hud_timeout">Controles do reprodutor de vídeo ocultando o atraso</string>
+    <string name="remove_from_history">Remover do histórico</string>
+    <string name="prefersmbv1">Priorizar SMB 1</string>
+    <string name="prefersmbv1_summary">Desmarque esta configuração se tiver alguma dificuldade em navegar em seu servidor SMB</string>
+    <string name="apply_to_all">Aplicar a todos os vídeos</string>
+    <string name="audio_delay_global">Definir atraso em %s ms para todos os vídeos</string>
+    <string name="warning_stream_speed">Aumentar a velocidade de reprodução acima de 1 para fluxos pode causar engasgos</string>
+    <string name="go_to_folder">Procurar na pasta pai</string>
+
 </resources>

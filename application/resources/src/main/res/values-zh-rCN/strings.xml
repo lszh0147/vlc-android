@@ -119,8 +119,6 @@
     <string name="firstsong">播放列表第一首</string>
     <string name="lastsong">播放列表最后一首</string>
 
-    <string name="locked">已锁定</string>
-    <string name="unlocked">已解锁</string>
     <string name="surface_best_fit">最为合适</string>
     <string name="surface_fit_screen">适合屏幕</string>
     <string name="surface_fill">拉伸填充</string>
@@ -140,9 +138,6 @@
     <string name="brightness">亮度</string>
     <string name="advanced">高级选项</string>
     <string name="audio_boost_warning">再次上滑可超越 100%</string>
-    <string name="locked_in_portrait_mode">锁定垂直模式\n(长按解除)</string>
-    <string name="locked_in_landscape_mode">锁定水平模式\n(长按解除)</string>
-    <string name="reset_orientation">方向重置</string>
 
     <plurals name="track_channels_info_quantity">
         <item quantity="other">%1$d 声道\n</item>
@@ -404,13 +399,11 @@
 
     <string name="delete_sub_title">删除字幕</string>
     <string name="delete_sub_message">是否删除该字幕?</string>
-    <string name="delete_sub_yes">是</string>
-    <string name="delete_sub_no">否</string>
     <string name="download_subtitle_title">下载字幕</string>
 
     <string name="no_result">未找到结果</string>
     <string name="no_internet_connection">请检查网络连接</string>
-    <string name="some_error_occurred">出现错误。请稍候再试</string>
+    <string name="subs_download_error">服务不可用，请稍后再试</string>
 
     <string name="network_browsing">本地网络</string>
     <string name="browsing">浏览</string>
@@ -500,7 +493,9 @@
     <string name="ml_external_storage_msg">是否希望 VLC 将设备「%1$s」添加到您的媒体库?</string>
     <string name="ml_external_storage_accept">是</string>
     <string name="ml_external_storage_decline">否</string>
-    <string name="last_added_media">添加时间</string>
+    <string name="auto_last_added_media">上次添加</string>
+    <string name="auto_my_library">我的库</string>
+    <string name="auto_home">主页</string>
     <string name="no">否</string>
     <string name="loading_medialibrary">正在加载媒体库…</string>
     <string name="yes">是</string>
@@ -705,4 +700,54 @@
     <string name="group_similar">自动重新组合</string>
     <string name="no_favorite">没有收藏内容</string>
     <string name="empty_directory">空</string>
+    <string name="no_track">没有乐曲</string>
+
+    <string name="swipe_unlock">滑动解锁</string>
+    <string name="swipe_unlock_no_touch">长按解锁</string>
+    <string name="sub_result_by_name">结果为%s</string>
+    <string name="sub_result_by_name_season">第%s季</string>
+    <string name="sub_result_by_name_episode">第%s集</string>
+
+    <string name="sub_result_by_file">文件结果</string>
+    <string name="donate">帮助 VLC</string>
+    <string name="donate_desc">支持志愿者建立VLC</string>
+    <string name="donate_subscribtion">我希望这是每月的赞助</string>
+    <string name="donate_send">开始赞助</string>
+    <string name="donation_description">您的赞助将使我们能够：\n改进适用于Android的VLC应用程序\n支持VideoLAN协会</string>
+    <string name="subscription_purchased">您已订阅每月赞助</string>
+    <string name="subscription_cancel">您可以在Play商店中退订</string>
+    <string name="subscription_cancel_tv">如何退订</string>
+    <string name="donate_unsubscribe_tv">要取消订阅，请在手机或计算机上打开%s或扫描以下代码：</string>
+    <string name="tip_jar">帮助 VLC</string>
+    <string name="thank_you">感谢</string>
+    <string name="thank_you_desc">感谢您的赞助！\n这将帮助我们大大改善VLC！</string>
+    <string name="donate_again">再次赞助该应用</string>
+
+    <string name="mark_as_played">标记为已播放</string>
+    <string name="mark_all_as_played">标记所有为已播放</string>
+    <string name="new_group">新组别</string>
+    <string name="new_group_desc">创建一个新组别</string>
+
+    <string name="air_action_rewind">倒退10秒</string>
+    <string name="air_action_forward">向前10秒</string>
+    <string name="air_action_play_pause">暂停/恢复播放</string>
+    <string name="air_action_volume_up">调高音量</string>
+    <string name="air_action_volume_down">调低音量</string>
+    <string name="air_action_next">下一个播放项目</string>
+    <string name="air_action_previous">上一个播放项目</string>
+    <string name="allow_otg">允许 OTG 访问</string>
+    <string name="allow_otg_description">请选择允许访问VLC的OTG驱动器。</string>
+    <string name="timeout_infinite">无限</string>
+    <string name="timeout_short">短</string>
+    <string name="timeout_normal">正常</string>
+    <string name="timeout_long">长</string>
+    <string name="video_hud_timeout">视频播放器控件隐藏延迟</string>
+    <string name="remove_from_history">从历史记录中删除</string>
+    <string name="prefersmbv1">优先使用SMB 1协议</string>
+    <string name="prefersmbv1_summary">如您浏览SMB服务器有困难，请取消选中这个设置</string>
+    <string name="apply_to_all">应用到所有视频</string>
+    <string name="audio_delay_global">所有视频的音频延迟设置为 %s ms</string>
+    <string name="warning_stream_speed">将流的回放速度加快到1以上可能会导致播放卡顿</string>
+    <string name="go_to_folder">浏览父文件夹</string>
+
 </resources>

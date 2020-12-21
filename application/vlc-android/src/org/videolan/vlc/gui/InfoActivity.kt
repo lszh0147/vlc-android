@@ -10,10 +10,10 @@ import android.view.Gravity
 import android.view.View
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
@@ -44,7 +44,10 @@ import org.videolan.vlc.gui.helpers.MedialibraryUtils
 import org.videolan.vlc.gui.video.MediaInfoAdapter
 import org.videolan.vlc.gui.view.VLCDividerItemDecoration
 import org.videolan.vlc.media.MediaUtils
-import org.videolan.vlc.util.*
+import org.videolan.vlc.util.generateResolutionClass
+import org.videolan.vlc.util.getModel
+import org.videolan.vlc.util.getScreenWidth
+import org.videolan.vlc.util.isSchemeSupported
 import org.videolan.vlc.viewmodels.browser.IPathOperationDelegate
 import org.videolan.vlc.viewmodels.browser.PathOperationDelegate
 import java.io.File
@@ -97,13 +100,14 @@ class InfoActivity : AudioPlayerContainerActivity(), View.OnClickListener, PathA
             adapter = MediaInfoAdapter()
             binding.list.layoutManager = LinearLayoutManager(binding.root.context)
             binding.list.adapter = adapter
+            binding.list.isNestedScrollingEnabled = false
             if (model.sizeText.value === null) model.checkFile(item)
             if (model.mediaTracks.value === null) model.parseTracks(this, item)
         }
-        model.hasSubs.observe(this, Observer { if (it) binding.infoSubtitles.visibility = View.VISIBLE })
-        model.mediaTracks.observe(this, Observer { adapter.setTracks(it) })
-        model.sizeText.observe(this, Observer { binding.sizeValueText = it })
-        model.cover.observe(this, Observer {
+        model.hasSubs.observe(this, { if (it) binding.infoSubtitles.visibility = View.VISIBLE })
+        model.mediaTracks.observe(this, { adapter.setTracks(it) })
+        model.sizeText.observe(this, { binding.sizeValueText = it })
+        model.cover.observe(this, {
             if (it != null) {
                 binding.cover = BitmapDrawable(this@InfoActivity.resources, it)
                 lifecycleScope.launch {
@@ -119,7 +123,7 @@ class InfoActivity : AudioPlayerContainerActivity(), View.OnClickListener, PathA
             val media = item as MediaWrapper
             val parent = media.uri.toString().substring(0, media.uri.toString().lastIndexOf("/"))
             MedialibraryUtils.addDir(parent, applicationContext)
-            Snackbar.make(binding.root, getString(R.string.scanned_directory_added, Uri.parse(parent).lastPathSegment), Snackbar.LENGTH_LONG).show()
+            Snackbar.make(binding.root, getString(R.string.scanned_directory_added, parent.toUri().lastPathSegment), Snackbar.LENGTH_LONG).show()
             binding.scanned = true
         }
     }
@@ -157,7 +161,7 @@ class InfoActivity : AudioPlayerContainerActivity(), View.OnClickListener, PathA
                     //scheme is supported => test if the parent is scanned
                     var isScanned = false
                     Medialibrary.getInstance().foldersList.forEach search@{
-                        if (media.uri.toString().startsWith(Uri.parse(it).toString())) {
+                        if (media.uri.toString().startsWith(it.toUri().toString())) {
                             isScanned = true
                             return@search
                         }
@@ -237,7 +241,7 @@ class InfoModel : ViewModel() {
     internal val mediaTracks = MutableLiveData<List<IMedia.Track>>()
     internal val sizeText = MutableLiveData<String>()
     internal val cover = MutableLiveData<Bitmap>()
-    internal val mMediaFactory = FactoryManager.getFactory(IMediaFactory.factoryId) as IMediaFactory
+    internal val mediaFactory = FactoryManager.getFactory(IMediaFactory.factoryId) as IMediaFactory
 
     internal fun getCover(mrl: String?, width: Int) = viewModelScope.launch {
         cover.value = mrl?.let { withContext(Dispatchers.IO) { AudioUtil.fetchCoverBitmap(Uri.decode(it), width) } }
@@ -246,7 +250,7 @@ class InfoModel : ViewModel() {
     internal fun parseTracks(context: Context, mw: MediaWrapper) = viewModelScope.launch {
         val media = withContext(Dispatchers.IO) {
             val libVlc = VLCInstance.getInstance(context)
-            mMediaFactory.getFromUri(libVlc, mw.uri).apply { parse() }
+            mediaFactory.getFromUri(libVlc, mw.uri).apply { parse() }
         }
         if (!isActive) return@launch
         var subs = false

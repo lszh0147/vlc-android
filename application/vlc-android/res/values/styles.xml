@@ -73,6 +73,8 @@
         <item name="list_subtitle">@color/list_subtitle</item>
         <item name="list_title_last">@color/list_title_last</item>
         <item name="list_title">@color/grey900</item>
+        <item name="donate_card">@color/orange500</item>
+        <item name="donate_item_background">@drawable/donate_background_color</item>
         <item name="android:windowBackground">@color/white</item>
 
         <item name="ic_playlist">@drawable/ic_playlist</item>
@@ -117,6 +119,10 @@
     </style>
 
     <style name="Theme.VLC.PickerDialog" parent="Theme.MaterialComponents.Dialog">
+        <item name="colorPrimary">@color/orange500</item>
+        <item name="colorPrimaryDark">@color/orange700</item>
+        <item name="colorSecondary">@color/orange500</item>
+        <item name="windowNoTitle">true</item>
         <item name="android:gridViewStyle">@style/Theme.VLC.List</item>
         <item name="background_default">@color/grey850</item>
         <item name="background_default_darker">@color/grey875</item>
@@ -124,6 +130,8 @@
         <item name="font_light">@color/grey600</item>
         <item name="list_subtitle">@color/grey400</item>
         <item name="list_title">@color/white</item>
+        <item name="ariane_text_color">@color/grey50</item>
+        <item name="ariane_text_size">14sp</item>
         <item name="android:windowBackground">@color/grey900</item>
         <item name="android:textViewStyle">@style/VLC.TextView</item>
     </style>
@@ -200,6 +208,8 @@
         <item name="list_subtitle">@color/grey400</item>
         <item name="list_title_last">@color/list_title_last</item>
         <item name="list_title">@color/white</item>
+        <item name="donate_card">@color/orange500transparent</item>
+        <item name="donate_item_background">@drawable/donate_background_color_dark</item>
         <item name="android:windowBackground">@color/black</item>
 
         <item name="ic_playlist">@drawable/ic_playlist_w</item>
@@ -268,6 +278,8 @@
         <item name="font_light">@color/grey50transparent_ea</item>
         <item name="empty_button">@style/Widget.Leanback.DetailsActionButtonStyle</item>
         <item name="list_subtitle">@color/lb_basic_card_content_text_color</item>
+        <item name="bottomSheetDialogTheme">@style/AppBottomSheetDialogTheme.Player</item>
+
     </style>
 
     <style name="VLCardView" parent="Widget.Leanback.ImageCardViewStyle">
@@ -353,7 +365,7 @@
     <style name="Theme.VLC.Transparent" parent="Theme.MaterialComponents.NoActionBar">
         <item name="colorPrimary">@color/orange800</item>
         <item name="colorPrimaryDark">@color/transparent</item>
-        <item name="colorAccent">@color/orange600</item>
+        <item name="colorAccent">@color/orange500</item>
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowIsTranslucent">true</item>
     </style>
@@ -661,6 +673,20 @@
         <item name="android:foreground">?android:attr/selectableItemBackground</item>
         <item name="android:clickable">true</item>
         <item name="android:focusable">true</item>
+
+    </style>
+
+    <style name="DonateButton">
+        <item name="android:minHeight">48dip</item>
+        <item name="android:minWidth">88dip</item>
+        <item name="android:focusable">true</item>
+        <item name="android:clickable">true</item>
+        <item name="android:gravity">center_vertical|center_horizontal</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:background">@drawable/donate_button_background</item>
+        <item name="background">@drawable/donate_button_background</item>
+        <item name="android:foreground">@drawable/donate_button_ripple</item>
 
     </style>
 

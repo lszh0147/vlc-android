@@ -47,6 +47,7 @@ import org.videolan.medialibrary.media.MediaLibraryItem
 import org.videolan.resources.*
 import org.videolan.tools.MultiSelectHelper
 import org.videolan.tools.isStarted
+import org.videolan.tools.retrieveParent
 import org.videolan.vlc.BuildConfig
 import org.videolan.vlc.R
 import org.videolan.vlc.gui.ContentActivity
@@ -239,6 +240,7 @@ abstract class BaseAudioBrowser<T : MedialibraryViewModel> : MediaBrowserFragmen
     }
 
     override fun onCreateActionMode(mode: ActionMode, menu: Menu): Boolean {
+        getCurrentAdapter()?.itemCount?.let { getMultiHelper()?.toggleActionMode(true, it) }
         mode.menuInflater.inflate(R.menu.action_mode_audio_browser, menu)
         return true
     }
@@ -250,13 +252,19 @@ abstract class BaseAudioBrowser<T : MedialibraryViewModel> : MediaBrowserFragmen
             stopActionMode()
             return false
         }
-        val isMedia = selection[0].itemType == MediaLibraryItem.TYPE_MEDIA
+        val isMedia = selection.first().itemType == MediaLibraryItem.TYPE_MEDIA
         val isSong = count == 1 && isMedia
         menu.findItem(R.id.action_mode_audio_set_song).isVisible = isSong && AndroidDevices.isPhone
         menu.findItem(R.id.action_mode_audio_info).isVisible = count == 1
         menu.findItem(R.id.action_mode_audio_append).isVisible = PlaylistManager.hasMedia()
         menu.findItem(R.id.action_mode_audio_delete).isVisible = isMedia
         menu.findItem(R.id.action_mode_audio_share).isVisible = isMedia
+        menu.findItem(R.id.action_mode_audio_share).isVisible = isMedia
+        menu.findItem(R.id.action_mode_go_to_folder).isVisible = if (count == 1) getCurrentAdapter()?.multiSelectHelper?.let { selectHelper ->
+            (selectHelper.getSelection().first() as? MediaWrapper)?.let {
+                it.uri.retrieveParent() != null
+            } ?: false
+        } ?: false else false
         return true
     }
 
@@ -269,10 +277,11 @@ abstract class BaseAudioBrowser<T : MedialibraryViewModel> : MediaBrowserFragmen
                 R.id.action_mode_audio_play -> MediaUtils.openList(activity, list.getTracks(), 0)
                 R.id.action_mode_audio_append -> MediaUtils.appendMedia(activity, list.getTracks())
                 R.id.action_mode_audio_add_playlist -> requireActivity().addToPlaylist(list.getTracks())
-                R.id.action_mode_audio_info -> showInfoDialog(list[0])
+                R.id.action_mode_audio_info -> showInfoDialog(list.first())
                 R.id.action_mode_audio_share -> requireActivity().share(list as List<MediaWrapper>)
-                R.id.action_mode_audio_set_song -> activity?.setRingtone(list[0] as MediaWrapper)
+                R.id.action_mode_audio_set_song -> activity?.setRingtone(list.first() as MediaWrapper)
                 R.id.action_mode_audio_delete -> removeItems(list)
+                R.id.action_mode_go_to_folder -> (list.first() as? MediaWrapper)?.let { showParentFolder(it) }
             }
         }
         return true
@@ -289,6 +298,7 @@ abstract class BaseAudioBrowser<T : MedialibraryViewModel> : MediaBrowserFragmen
     }
 
     internal fun onDestroyActionMode(adapter: AudioBrowserAdapter?) {
+        adapter?.itemCount?.let { getMultiHelper()?.toggleActionMode(false, it) }
         setFabPlayVisibility(true)
         actionMode = null
         adapter?.multiSelectHelper?.clearSelection()
@@ -351,6 +361,7 @@ abstract class BaseAudioBrowser<T : MedialibraryViewModel> : MediaBrowserFragmen
             CTX_ADD_TO_PLAYLIST -> requireActivity().addToPlaylist(media.tracks, SavePlaylistDialog.KEY_NEW_TRACKS)
             CTX_SET_RINGTONE -> activity?.setRingtone(media as MediaWrapper)
             CTX_SHARE -> lifecycleScope.launch { (requireActivity() as AppCompatActivity).share(media as MediaWrapper) }
+            CTX_GO_TO_FOLDER -> showParentFolder(media as MediaWrapper)
         }
     }
 

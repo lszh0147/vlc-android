@@ -13,6 +13,7 @@
     <string name="sortby_length">Længde</string>
     <string name="sortby_date">Dato</string>
     <string name="sortby_last_modified_date">Tilføjet for nylig</string>
+    <string name="sortby_media_number">Medienummer</string>
     <string name="sortby_number">Nr. spor</string>
     <string name="searchable_hint">Søg …</string>
     <string name="history">Historik</string>
@@ -46,6 +47,7 @@
     <string name="set_song_question">Anvend \'%1$s\' som ringetone?</string>
     <string name="info">Information</string>
     <string name="confirm_delete">Slet filen \"%1$s\"?</string>
+    <string name="confirm_delete_album">Slet albummet \'%1$s\'?</string>
     <string name="confirm_delete_several_media">Slet disse %1$d medier?</string>
     <string name="confirm_delete_folder">Slet mappen \'%1$s\' og alt dens indhold?</string>
     <string name="confirm_delete_playlist">Slet spillelisten \'%1$s\'?</string>
@@ -125,8 +127,6 @@
     <string name="firstsong">Første nummer i spillelisten</string>
     <string name="lastsong">Sidste nummer i spillelisten</string>
 
-    <string name="locked">Låst</string>
-    <string name="unlocked">Ulåst</string>
     <string name="surface_best_fit">Bedste tilpasning</string>
     <string name="surface_fit_screen">Tilpas skærm</string>
     <string name="surface_fill">Udfyld</string>
@@ -146,9 +146,6 @@
     <string name="brightness">Lysstyrke</string>
     <string name="advanced">avancerede indstillinger</string>
     <string name="audio_boost_warning">Stryg op igen for at gå over 100%</string>
-    <string name="locked_in_portrait_mode">Låst i portræt-tilstand\n(tryk længe på knappen for at annullere)</string>
-    <string name="locked_in_landscape_mode">Låst i landskab-tilstand\n(tryk længe på knappen for at annullere)</string>
-    <string name="reset_orientation">Orientering nulstillet</string>
 
     <plurals name="track_channels_info_quantity">
         <item quantity="one">1 kanal\n</item>
@@ -194,6 +191,8 @@
     <string name="playback_history_title">Afspilningshistorik</string>
     <string name="playback_history_summary">Gem alle afspillede medier i Historik</string>
     <string name="playback_speed_title">Gem afspilningshastighed</string>
+    <string name="playback_speed_summary">Bevar afspilningshastighed mellem medier</string>
+
     <string name="play_button">Afspil-knap</string>
 
     <!-- Tips -->
@@ -269,6 +268,8 @@
     <string name="media_seen_summary">Mærk en video som set når du afspiller den til slutningen</string>
     <string name="force_play_all_summary">Afspil alle videoer, startende med den du klikkede på</string>
     <string name="force_play_all_title">Videospilleliste-tilstand</string>
+    <string name="save_brightness_summary">Bevar lysstyrke mellem medier</string>
+    <string name="save_brightness_title">Gem niveau for lysstyrke</string>
     <string name="save_audiodelay_summary">Gem individuel lydforsinkelse for hver video</string>
     <string name="save_audiodelay_title">Gem lydforsinkelse</string>
     <string name="enable_brightness_gesture_title">Lysstyrke-gestus</string>
@@ -317,6 +318,7 @@
     <string name="enable_play_on_headset_insertion">Genoptag ved indsættelse af hovedtelefoner</string>
     <string name="enable_play_on_headset_insertion_summary">Ellers sæt på pause</string>
     <string name="aout">Lydoutput</string>
+    <string name="aout_summary">Skift metoden som VLC anvender til at udsende lyd med</string>
     <string name="audio_ducking_title">Lavere VLC-lydstyrke ved notifikationer</string>
     <string name="audio_ducking_summary">Hjælper med at høre lydnotifikationer, navigationsinstruktioner eller assisterende tale</string>
     <string name="casting_category">Udsendelse</string>
@@ -396,14 +398,10 @@
 
     <string name="delete_sub_title">Slet undertekst</string>
     <string name="delete_sub_message">Vil du slette underteksten?</string>
-    <string name="delete_sub_yes">Ja</string>
-    <string name="delete_sub_no">Nej</string>
     <string name="download_subtitle_title">Download untertekst</string>
 
     <string name="no_result">Ingen resultater fundet</string>
     <string name="no_internet_connection">Tjek din internetforbindelse</string>
-    <string name="some_error_occurred">Der opstod en fejl. Prøv igen om nogle få sekunder</string>
-
     <string name="network_browsing">Lokalt netværk</string>
     <string name="browsing">Gennemser</string>
 
@@ -491,7 +489,6 @@
     <string name="ml_external_storage_msg">Vil du have at VLC skal tilføje enheden %1$s til dit mediebibliotek?</string>
     <string name="ml_external_storage_accept">Ja</string>
     <string name="ml_external_storage_decline">Nej</string>
-    <string name="last_added_media">sidst tilføjet</string>
     <string name="no">Nej</string>
     <string name="loading_medialibrary">Indlæser mediebibliotek…</string>
     <string name="yes">Ja</string>
@@ -691,4 +688,14 @@
     <string name="more">Mere</string>
     <string name="favorites">Favoritter</string>
     <string name="new_stream">Ny stream</string>
+    <string name="add_to_group">Tilføj til videogruppe</string>
+    <string name="remove_from_group">Fjern fra videogruppe</string>
+    <string name="rename_group">Omdøb videogruppe</string>
+    <string name="no_favorite">Ingen favorit</string>
+    <string name="empty_directory">Tom</string>
+    <string name="no_track">Ingen spor</string>
+
+    <string name="donate">Hjælp VLC</string>
+    <string name="tip_jar">Hjælp VLC</string>
+    <string name="thank_you">Tak</string>
 </resources>

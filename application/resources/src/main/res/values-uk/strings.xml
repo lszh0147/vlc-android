@@ -143,8 +143,6 @@
     <string name="firstsong">Перша пісня зі списку</string>
     <string name="lastsong">Остання пісня зі списку</string>
 
-    <string name="locked">Заблоковано</string>
-    <string name="unlocked">Розблоковано</string>
     <string name="surface_best_fit">Найкраще</string>
     <string name="surface_fit_screen">Екранний розмір</string>
     <string name="surface_fill">Заповнити</string>
@@ -164,9 +162,6 @@
     <string name="brightness">Яскравість</string>
     <string name="advanced">додаткові параметри</string>
     <string name="audio_boost_warning">Проведіть вгору, щоби перевищити 100%</string>
-    <string name="locked_in_portrait_mode">Заблоковано у книжковому режимі\n(Для скасування натисніть та утримуйте кнопку)</string>
-    <string name="locked_in_landscape_mode">Заблоковано в альбомному режимі\n(Для скасування натисніть та утримуйте кнопку)</string>
-    <string name="reset_orientation">Очистити орієнтацію</string>
 
     <plurals name="track_channels_info_quantity">
         <item quantity="one">1 канал\n</item>
@@ -431,13 +426,11 @@
 
     <string name="delete_sub_title">Вилучити субтитр</string>
     <string name="delete_sub_message">Справді вилучити цей субтитр?</string>
-    <string name="delete_sub_yes">Так</string>
-    <string name="delete_sub_no">Ні</string>
     <string name="download_subtitle_title">Звантажити субтитр</string>
 
     <string name="no_result">Результатів не знайдено</string>
     <string name="no_internet_connection">Перевірте ваше з\'єднання з інтернетом</string>
-    <string name="some_error_occurred">Трапилася деяка помилка. Будь ласка, спробуйте знову за декілька секунд.</string>
+    <string name="subs_download_error">Служба недоступна. Будь ласка, спробуйте знову пізніше </string>
 
     <string name="network_browsing">Локальна мережа</string>
     <string name="browsing">Огляд</string>
@@ -527,7 +520,9 @@
     <string name="ml_external_storage_msg">Хочете, щоби VLC додала пристрій %1$s до вашої бібліотеки медіа?</string>
     <string name="ml_external_storage_accept">Так</string>
     <string name="ml_external_storage_decline">Ні</string>
-    <string name="last_added_media">останнє додане</string>
+    <string name="auto_last_added_media">Останнє додане</string>
+    <string name="auto_my_library">Моя бібліотека</string>
+    <string name="auto_home">Головна</string>
     <string name="no">Ні</string>
     <string name="loading_medialibrary">Завантажується бібліотека медіа…</string>
     <string name="yes">Так</string>
@@ -738,4 +733,54 @@
     <string name="group_similar">Перегрупувати автоматично</string>
     <string name="no_favorite">Не обране</string>
     <string name="empty_directory">Порожньо</string>
+    <string name="no_track">Без доріжки</string>
+
+    <string name="swipe_unlock">Проведіть для розблокування</string>
+    <string name="swipe_unlock_no_touch">Тривалий натиск для розблокування</string>
+    <string name="sub_result_by_name">Результати для %s</string>
+    <string name="sub_result_by_name_season">Сезон %s</string>
+    <string name="sub_result_by_name_episode">Епізод %s</string>
+
+    <string name="sub_result_by_file">Результати для вашого файла</string>
+    <string name="donate">Довідка VLC</string>
+    <string name="donate_desc">Підтримати добровільну збірку VLC</string>
+    <string name="donate_subscribtion">Я б хотів, щоби це була місячна підтримка</string>
+    <string name="donate_send">Розпочати вашу підтримку</string>
+    <string name="donation_description">Ваша підтримка дозволить нам:\nПокращити програму VLC app для Android\nПідтримати асоціацію VideoLAN</string>
+    <string name="subscription_purchased">Ви підписані на місячну підтримку</string>
+    <string name="subscription_cancel">Ви можете відписатися у крамниці Play</string>
+    <string name="subscription_cancel_tv">Як відписатися</string>
+    <string name="donate_unsubscribe_tv">Щоб відписатися, будь ласка, відкрийте %s на телефоні або комп\'ютері чи відскайнуйте цей код:</string>
+    <string name="tip_jar">Довідка VLC</string>
+    <string name="thank_you">Дякуємо вам</string>
+    <string name="thank_you_desc">Дякуємо вам за вашу фінансову підтримку!\nВона допоможе нам покращувати VLC!</string>
+    <string name="donate_again">Підтримати знову програму</string>
+
+    <string name="mark_as_played">Позначити як відтворене</string>
+    <string name="mark_all_as_played">Позначии усе як відтворене</string>
+    <string name="new_group">Нова група</string>
+    <string name="new_group_desc">Створити нову групу</string>
+
+    <string name="air_action_rewind">Перемотати 10 с</string>
+    <string name="air_action_forward">Пошук вперед на 10 с</string>
+    <string name="air_action_play_pause">Пауза/Відновлення відтворення</string>
+    <string name="air_action_volume_up">Голосніше</string>
+    <string name="air_action_volume_down">Тихіше</string>
+    <string name="air_action_next">Наступний елемент у відтворенні</string>
+    <string name="air_action_previous">Попередній елемент у відтворенні</string>
+    <string name="allow_otg">Дозволити доступ через  OTG</string>
+    <string name="allow_otg_description">Будь ласка, виберіть ваш носій OTG, щоб дозволити доступ для VLC.</string>
+    <string name="timeout_infinite">Нескінченна</string>
+    <string name="timeout_short">Коротка</string>
+    <string name="timeout_normal">Нормальна</string>
+    <string name="timeout_long">Довга</string>
+    <string name="video_hud_timeout">Відео програвач управляє затримкою</string>
+    <string name="remove_from_history">Вилучити з історії</string>
+    <string name="prefersmbv1">Віддати перевагу SMB 1</string>
+    <string name="prefersmbv1_summary">Вимкніть цей параметр, якщо у вас наявні труднощі при перегляді вашого сервера SMB.</string>
+    <string name="apply_to_all">Застосувати до всіх відео</string>
+    <string name="audio_delay_global">Затримку аудіо задати на %s мс для всіх відео</string>
+    <string name="warning_stream_speed">Збільшення швидкості відтворення понад 1 для потоків може спричинити пригальмовування</string>
+    <string name="go_to_folder">Огляд батьківської теки</string>
+
 </resources>

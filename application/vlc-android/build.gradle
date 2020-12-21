@@ -12,7 +12,7 @@ android {
     dataBinding {
         enabled = true
     }
-    
+
     packagingOptions {
         pickFirst '**/*.so'
     }
@@ -24,6 +24,9 @@ android {
         resValue "string", "build_revision", revision()
         resValue 'string', 'tv_provider_authority', "\"${rootProject.ext.appId}\".tv"
         buildConfigField "String", "APP_ID", "\"${rootProject.ext.appId}\""
+        buildConfigField 'int', 'VLC_VERSION_CODE', "${rootProject.ext.versionCode}"
+        buildConfigField 'String', 'VLC_VERSION_NAME', "\"${rootProject.ext.versionName}\""
+        buildConfigField 'String[]', 'TRANSLATION_ARRAY', generateTranslation()
 
         testInstrumentationRunner "org.videolan.vlc.MultidexTestRunner"
         // The following argument makes the Android Test Orchestrator run its
@@ -46,6 +49,7 @@ android {
     }
 
     testOptions {
+        animationsDisabled = true
         execution 'ANDROIDX_TEST_ORCHESTRATOR'
         unitTests {
             includeAndroidResources = true
@@ -112,32 +116,29 @@ android {
     }
 }
 
+def generateTranslation() {
+    def foundLocales = new StringBuilder()
+    foundLocales.append("new String[]{")
+
+    fileTree("../resources/src/main/res").visit { FileVisitDetails details ->
+        println 'details: ' + details
+        if (details.file.path.endsWith("strings.xml")) {
+            def languageCode = details.file.parentFile.name.replaceAll('values-', '').replaceAll('-r', '-')
+            languageCode = (languageCode == "values") ? "en" : languageCode
+            foundLocales.append("\"").append(languageCode).append("\"").append(",")
+        }
+    }
+
+    foundLocales.append("}")
+    //Don't forget to remove the trailing comma
+    def foundLocalesString = foundLocales.toString().replaceAll(',}', '}')
+    return foundLocalesString
+}
+
 task generateSources(type: Jar) {
     classifier = 'sources'
     from android.sourceSets.main.java.srcDirs
 }
-
-task buildTranslationArray {
-    doLast {
-        def foundLocales = new StringBuilder()
-        foundLocales.append("new String[]{")
-
-        fileTree("../resources/src/main/res").visit { FileVisitDetails details ->
-            println 'details: ' + details
-            if (details.file.path.endsWith("strings.xml")) {
-                def languageCode = details.file.parentFile.name.replaceAll('values-', '').replaceAll('-r', '-')
-                languageCode = (languageCode == "values") ? "en" : languageCode
-                foundLocales.append("\"").append(languageCode).append("\"").append(",")
-            }
-        }
-
-        foundLocales.append("}")
-        //Don't forget to remove the trailing comma
-        def foundLocalesString = foundLocales.toString().replaceAll(',}', '}')
-        android.defaultConfig.buildConfigField "String[]", "TRANSLATION_ARRAY", foundLocalesString
-    }
-}
-preBuild.dependsOn buildTranslationArray
 
 dependencies {
     devApi project(':libvlc')
@@ -153,6 +154,8 @@ dependencies {
     api project(':application:resources')
     api project(':application:mediadb')
     api project(':application:live-plot-graph')
+    api project(':application:donations')
+
 
     // AppCompat
     api "androidx.activity:activity-ktx:$rootProject.ext.androidxActivityVersion"
@@ -182,6 +185,8 @@ dependencies {
     api "org.jetbrains.kotlinx:kotlinx-coroutines-core:$rootProject.ext.kotlinx_version"
     api "org.jetbrains.kotlinx:kotlinx-coroutines-android:$rootProject.ext.kotlinx_version"
 
+    implementation 'nl.dionsegijn:konfetti:1.2.2'
+
     // Tests
     androidTestApi "androidx.test.espresso:espresso-contrib:$rootProject.espressoVersion"
     androidTestApi "androidx.test.espresso:espresso-core:$rootProject.espressoVersion"
@@ -191,8 +196,8 @@ dependencies {
     testApi "androidx.arch.core:core-testing:$rootProject.ext.archVersion"
     androidTestApi "androidx.arch.core:core-testing:$rootProject.ext.archVersion"
     androidTestApi "androidx.test.ext:junit:$rootProject.ext.supportTest"
-    androidTestUtil "androidx.test:orchestrator:$rootProject.ext.supportTest"
-    testApi "androidx.test:core:$rootProject.ext.supportTest"
+    androidTestUtil "androidx.test:orchestrator:$rootProject.ext.orchestrator"
+    testApi "androidx.test:core:$rootProject.ext.testCore"
     testApi "org.jetbrains.kotlinx:kotlinx-coroutines-test:$rootProject.ext.kotlinx_version"
     testApi "org.mockito:mockito-core:$rootProject.ext.mockito"
     testApi "io.mockk:mockk:$rootProject.ext.mockk"
@@ -200,7 +205,8 @@ dependencies {
     testApi "org.powermock:powermock-module-junit4:$rootProject.ext.powerMock"
     testApi "com.jraska.livedata:testing-ktx:$rootProject.ext.livedataTest"
     testApi "org.robolectric:robolectric:$rootProject.ext.robolectric"
-    androidTestApi 'androidx.test:rules:1.3.0-alpha05'
+    androidTestApi "androidx.test:rules:$rootProject.ext.testCore"
+    androidTestImplementation 'tools.fastlane:screengrab:2.0.0'
 }
 
 

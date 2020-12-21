@@ -127,13 +127,11 @@
     <string name="firstsong">A lejátszólista első száma</string>
     <string name="lastsong">A lejátszólista utolsó száma</string>
 
-    <string name="locked">Zárolva</string>
-    <string name="unlocked">Feloldva</string>
     <string name="surface_best_fit">Legjobb illeszkedés</string>
     <string name="surface_fit_screen">Képernyőhöz igazítás</string>
     <string name="surface_fill">Kitöltés</string>
     <string name="surface_original">Középre</string>
-    <string name="unseekable_stream">Nem lehet tekerni ebben a folyamban</string>
+    <string name="unseekable_stream">Nem lehet tekerni ebben a közvetítésben</string>
     <string name="refresh">Frissítés</string>
     <string name="track_audio">Hangsáv</string>
     <string name="track_video">Videosáv</string>
@@ -148,9 +146,6 @@
     <string name="brightness">Fényerő</string>
     <string name="advanced">speciális beállítások</string>
     <string name="audio_boost_warning">Húzza fel újra, hogy 100% fölé menjen</string>
-    <string name="locked_in_portrait_mode">Álló módban zárolva\n(A megszakításhoz nyomja hosszan a gombot)</string>
-    <string name="locked_in_landscape_mode">Fekvő módban zárolva\n(A megszakításhoz nyomja hosszan a gombot)</string>
-    <string name="reset_orientation">Tájolás visszaállítása</string>
 
     <plurals name="track_channels_info_quantity">
         <item quantity="one">1 csatorna\n</item>
@@ -184,7 +179,7 @@
     <string name="favorite_added">Mentve a kedvencek közé</string>
     <string name="favorite_removed">Eltávolítva a kedvencek közül</string>
 
-    <string name="streams">Folyamok</string>
+    <string name="streams">Közvetítések</string>
     <string name="open_mrl_dialog_msg">Írja be a hálózati címet: pl. http://, mms:// vagy rtsp://</string>
     <string name="encountered_error_title">Lejátszási hiba</string>
     <string name="encountered_error_message">A VLC hibát tapasztalt ezzel a médiával.\nPróbálja meg frissíteni a médiatárat.</string>
@@ -413,13 +408,11 @@
 
     <string name="delete_sub_title">Felirat törlése</string>
     <string name="delete_sub_message">Biztos, hogy törölni akarja ezt a feliratot?</string>
-    <string name="delete_sub_yes">Igen</string>
-    <string name="delete_sub_no">Nem</string>
     <string name="download_subtitle_title">Felirat letöltése</string>
 
     <string name="no_result">Nincs találat</string>
     <string name="no_internet_connection">Ellenőrizze az internetkapcsolatát</string>
-    <string name="some_error_occurred">Valami hiba történt. Próbálja újra néhány másodperc múlva</string>
+    <string name="subs_download_error">A szolgáltatás nem érhető el, próbálja újra később</string>
 
     <string name="network_browsing">Helyi hálózat</string>
     <string name="browsing">Tallózás</string>
@@ -449,7 +442,7 @@
     <!-- Accessibility -->
     <string name="more_actions">További műveletek</string>
     <string name="back_quit_lock">Nyomja meg a visszát még egyszer a videóból kilépéshez</string>
-    <string name="stream_deleted">Folyam törölve</string>
+    <string name="stream_deleted">Közvetítés törölve</string>
     <string name="no_subs_found">Nincs felirat ebben a könyvtárban</string>
     <string name="music_now_playing">Most játszott</string>
 
@@ -509,7 +502,9 @@
     <string name="ml_external_storage_msg">Szeretné, hogy a VLC hozzáadja a(z) %1$s eszközt a médiatárához?</string>
     <string name="ml_external_storage_accept">Igen</string>
     <string name="ml_external_storage_decline">Nem</string>
-    <string name="last_added_media">legutóbb hozzáadva</string>
+    <string name="auto_last_added_media">Legutóbb hozzáadva</string>
+    <string name="auto_my_library">Saját médiatár</string>
+    <string name="auto_home">Kezdőlap</string>
     <string name="no">Nem</string>
     <string name="loading_medialibrary">Médiatár betöltése…</string>
     <string name="yes">Igen</string>
@@ -708,7 +703,7 @@
     <string name="browse">Tallózás</string>
     <string name="more">Több</string>
     <string name="favorites">Kedvencek</string>
-    <string name="new_stream">Új folyam</string>
+    <string name="new_stream">Új közvetítés</string>
     <string name="add_to_group">Hozzáadása videócsoporthoz</string>
     <string name="remove_from_group">Eltávolítás a videócsoporttól</string>
     <string name="rename_group">Videócsoport átnevezése</string>
@@ -716,4 +711,54 @@
     <string name="group_similar">Újracsoportosítás automatikusan</string>
     <string name="no_favorite">Nincs kedvenc</string>
     <string name="empty_directory">Üres</string>
+    <string name="no_track">Nincs szám</string>
+
+    <string name="swipe_unlock">Seprés a feloldáshoz</string>
+    <string name="swipe_unlock_no_touch">Hosszú érintés a feloldáshoz</string>
+    <string name="sub_result_by_name">Találatok erre: %s</string>
+    <string name="sub_result_by_name_season">%s. évad</string>
+    <string name="sub_result_by_name_episode">%s. epizód</string>
+
+    <string name="sub_result_by_file">Találatok a fájlhoz</string>
+    <string name="donate">Segítse a VLC-t</string>
+    <string name="donate_desc">Támogassa a VLC-t készítő önkénteseket</string>
+    <string name="donate_subscribtion">Szeretném, hogy ez egy havi támogatás legyen</string>
+    <string name="donate_send">Kezdje le a támogatását</string>
+    <string name="donation_description">A támogatása lehetővé teszi:\nAz androidos VLC alkalmazás fejlesztését\nA VideoLAN Association támogatását</string>
+    <string name="subscription_purchased">Feliratkozott egy havi támogatásra</string>
+    <string name="subscription_cancel">A Play Store-ban iratkozhat le</string>
+    <string name="subscription_cancel_tv">Hogyan iratkozzon le</string>
+    <string name="donate_unsubscribe_tv">A leiratkozáshoz nyissa meg a %s alkalmazást a telefonján vagy számítógépén, vagy olvassa le ezt a kódot:</string>
+    <string name="tip_jar">Segítse a VLC-t</string>
+    <string name="thank_you">Köszönjük</string>
+    <string name="thank_you_desc">Köszönjük a támogatását!\nSokat fog nekünk segíteni a VLC fejlesztésében!</string>
+    <string name="donate_again">Támogassa újra az alkalmazást</string>
+
+    <string name="mark_as_played">Megjelölés lejátszottként</string>
+    <string name="mark_all_as_played">Összes megjelölése lejátszottként</string>
+    <string name="new_group">Új csoport</string>
+    <string name="new_group_desc">Új csoport létrehozása</string>
+
+    <string name="air_action_rewind">Visszatekerés 10 másodperccel</string>
+    <string name="air_action_forward">Tekerés előre 10 másodperccel</string>
+    <string name="air_action_play_pause">Lejátszás szüneteltetése/folytatása</string>
+    <string name="air_action_volume_up">Hangerő fel</string>
+    <string name="air_action_volume_down">Hangerő le</string>
+    <string name="air_action_next">Következő lejátszási elem</string>
+    <string name="air_action_previous">Előző lejátszási elem</string>
+    <string name="allow_otg">OTG hozzáférés bekapcsolása</string>
+    <string name="allow_otg_description">Válassza ki az OTG eszközt, hogy hozzáférést kérjen a VLC-hez</string>
+    <string name="timeout_infinite">Végtelen</string>
+    <string name="timeout_short">Rövid</string>
+    <string name="timeout_normal">Normál</string>
+    <string name="timeout_long">Hosszú</string>
+    <string name="video_hud_timeout">Videó vezérlők elrejtési késleltetése</string>
+    <string name="remove_from_history">Eltávolítás az előzményekből</string>
+    <string name="prefersmbv1">SMB 1 előnyben részesítése</string>
+    <string name="prefersmbv1_summary">Kapcsolja ki ezt a beállítást, ha problémákba ütközik az SMB szerverek böngészésekor</string>
+    <string name="apply_to_all">Alkalmazás az összes videóra</string>
+    <string name="audio_delay_global">Hangkésleltetés %s ms-ra állítva az összes videónál</string>
+    <string name="warning_stream_speed">A lejátszási sebesség 1 fölé állítása akadozást okozhat a közvetítéseknél</string>
+    <string name="go_to_folder">Szülő tallózása</string>
+
 </resources>

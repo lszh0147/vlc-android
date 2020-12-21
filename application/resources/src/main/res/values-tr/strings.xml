@@ -42,7 +42,7 @@
     <string name="resume_playback_short_title">Oynatmayı sürdür</string>
     <string name="resume_playback_long_title">Son oynatma listesini oynatmayı sürdürür</string>
     <string name="delete">Sil</string>
-    <string name="remove">Ç:ıkar</string>
+    <string name="remove">Çıkar</string>
     <string name="set_song">Zil sesi olarak ayarla</string>
     <string name="set_song_question">\'%1$s\' zil sesi olarak ayarlansın mı?</string>
     <string name="info">Bilgiler</string>
@@ -127,8 +127,6 @@
     <string name="firstsong">Oynatma listesinin ilk parçası</string>
     <string name="lastsong">Oynatma listesinin son parçası</string>
 
-    <string name="locked">Kilitli</string>
-    <string name="unlocked">Kilitlenmemiş</string>
     <string name="surface_best_fit">En uygun</string>
     <string name="surface_fit_screen">Ekrana sığdır</string>
     <string name="surface_fill">Doldur</string>
@@ -148,9 +146,6 @@
     <string name="brightness">Parlaklık</string>
     <string name="advanced">gelişmiş ayarlar</string>
     <string name="audio_boost_warning">%100 üzerine çıkmak için yeniden yukarı kaydırın</string>
-    <string name="locked_in_portrait_mode">Dikey doğrultuya kilitlenmiş\n(İptal etmek için düğmeye uzun basın)</string>
-    <string name="locked_in_landscape_mode">Yatay doğrultuya kilitlenmiş\n(İptal etmek için düğmeye uzun basın)</string>
-    <string name="reset_orientation">Doğrultuyu sıfırla</string>
 
     <plurals name="track_channels_info_quantity">
         <item quantity="one">1 kanal\n</item>
@@ -413,13 +408,11 @@
 
     <string name="delete_sub_title">Alt yazıyı sil</string>
     <string name="delete_sub_message">Bu alt yazı silinsin mi?</string>
-    <string name="delete_sub_yes">Evet</string>
-    <string name="delete_sub_no">Hayır</string>
     <string name="download_subtitle_title">Alt Yazıyı İndir</string>
 
     <string name="no_result">Herhangi bir sonuç bulunamadı</string>
     <string name="no_internet_connection">İnternet bağlantınızı denetleyin</string>
-    <string name="some_error_occurred">Bazı sorunlar çıktı. Lütfen bir kaç saniye sonra yeniden deneyin</string>
+    <string name="subs_download_error">Hizmet kullanılamıyor. Lütfen daha sonra yeniden deneyin</string>
 
     <string name="network_browsing">Yerel Ağ</string>
     <string name="browsing">Göz atılıyor</string>
@@ -509,7 +502,9 @@
     <string name="ml_external_storage_msg">%1$s aygıtının ortam kitaplığı olarak eklenmesini ister misiniz?</string>
     <string name="ml_external_storage_accept">Evet</string>
     <string name="ml_external_storage_decline">Hayır</string>
-    <string name="last_added_media">son eklenen</string>
+    <string name="auto_last_added_media">Son eklenen</string>
+    <string name="auto_my_library">Kitaplığım</string>
+    <string name="auto_home">Ana sayfa</string>
     <string name="no">Hayır</string>
     <string name="loading_medialibrary">Ortam Kitaplığı Yükleniyor…</string>
     <string name="yes">Evet</string>
@@ -716,4 +711,54 @@
     <string name="group_similar">Otomatik olarak yeniden grupla</string>
     <string name="no_favorite">Sık kullanılan yok</string>
     <string name="empty_directory">Boş</string>
+    <string name="no_track">Herhangi bir kayıt yok</string>
+
+    <string name="swipe_unlock">Kilidi açmak için kaydırın</string>
+    <string name="swipe_unlock_no_touch">Kilidi açmak için uzun dokunun</string>
+    <string name="sub_result_by_name">%s için sonuçlar</string>
+    <string name="sub_result_by_name_season">%s. sezon</string>
+    <string name="sub_result_by_name_episode">%s. bölüm</string>
+
+    <string name="sub_result_by_file">Dosyanızın sonuçları</string>
+    <string name="donate">VLC projesine destek olun</string>
+    <string name="donate_desc">VLC projesindeki gönüllüleri destekleyin</string>
+    <string name="donate_subscribtion">Aylık destek olmak istiyorum</string>
+    <string name="donate_send">Desteğinizi başlatın</string>
+    <string name="donation_description">Desteğiniz sayesinde:\nAndroid için VLC uygulaması geliştirilecek\nVideoLAN kuruluşu desteklenecek</string>
+    <string name="subscription_purchased">Aylık destek abonesi oldunuz</string>
+    <string name="subscription_cancel">Aboneliğinizi Play Store üzerinden sona erdirebilirsiniz</string>
+    <string name="subscription_cancel_tv">Aboneliğimi nasıl sona erdirebilirim</string>
+    <string name="donate_unsubscribe_tv">Aboneliğinizi sona erdirmek için bir telefon ya da bilgisayar üzerinde %s uygulamasını açtıktan sonra şu kodu tarayın:</string>
+    <string name="tip_jar">VLC Projesini Destekleyin</string>
+    <string name="thank_you">Teşekkürler</string>
+    <string name="thank_you_desc">Desteğiniz için teşekkürler!\nVLC uygulamasının geliştirilmesine çok yardımınız olacak!</string>
+    <string name="donate_again">Uygulamaya yeniden destek olun</string>
+
+    <string name="mark_as_played">Oynatılmış olarak işaretle</string>
+    <string name="mark_all_as_played">Tümünü oynatılmış olarak işaretle</string>
+    <string name="new_group">Grup ekle</string>
+    <string name="new_group_desc">Yeni bir grup ekler</string>
+
+    <string name="air_action_rewind">10 saniye geri atla</string>
+    <string name="air_action_forward">10 saniye ileri atla</string>
+    <string name="air_action_play_pause">Oynatmayı Duraklat/Sürdür</string>
+    <string name="air_action_volume_up">Sesi aç</string>
+    <string name="air_action_volume_down">Sesi kıs</string>
+    <string name="air_action_next">Oynatma listesinde sonraki öge</string>
+    <string name="air_action_previous">Oynatma listesinde önceki öge</string>
+    <string name="allow_otg">OTG erişimi kullanılsın</string>
+    <string name="allow_otg_description">VLC tarafından erişilmesini istediğiniz OTG sürücüsünü seçin.</string>
+    <string name="timeout_infinite">Sonsuz</string>
+    <string name="timeout_short">Kısa</string>
+    <string name="timeout_normal">Normal</string>
+    <string name="timeout_long">Uzun</string>
+    <string name="video_hud_timeout">Görüntü oynatıcı denetimlerini gizleme gecikmesi</string>
+    <string name="remove_from_history">Geçmiş kaydını sil</string>
+    <string name="prefersmbv1">SMB 1 yeğlensin</string>
+    <string name="prefersmbv1_summary">SMB sunucunuza erişmekte sorun yaşıyorsanız bu seçeneği devre dışı bırakın</string>
+    <string name="apply_to_all">Tüm görüntülere uygula</string>
+    <string name="audio_delay_global">Tüm görüntüler için ses gecikmesi %s ms olarak ayarlandı</string>
+    <string name="warning_stream_speed">Akışlarda oynatma hızının 1 üzerine çıkarılması takılmaya neden olabilir</string>
+    <string name="go_to_folder">Üst ögeye göz at</string>
+
 </resources>

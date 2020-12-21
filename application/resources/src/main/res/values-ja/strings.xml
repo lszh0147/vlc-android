@@ -119,8 +119,6 @@
     <string name="firstsong">プレイリストの最初の曲</string>
     <string name="lastsong">プレイリストの最後の曲</string>
 
-    <string name="locked">ロック中</string>
-    <string name="unlocked">ロック解除</string>
     <string name="surface_best_fit">スクリーンに最適化</string>
     <string name="surface_fit_screen">画面に合わせる</string>
     <string name="surface_fill">画面一杯に合わせる</string>
@@ -140,9 +138,6 @@
     <string name="brightness">明るさ</string>
     <string name="advanced">詳細設定オプション</string>
     <string name="audio_boost_warning">スライドアップで100%を超過</string>
-    <string name="locked_in_portrait_mode">ポートレートモードに固定\n(ボタン長押しでキャンセル)</string>
-    <string name="locked_in_landscape_mode">ランドスケープモードに固定\n(ボタン長押しでキャンセル)</string>
-    <string name="reset_orientation">方向リセット</string>
 
     <plurals name="track_channels_info_quantity">
         <item quantity="other">%1$d チャンネル\n</item>
@@ -404,13 +399,11 @@
 
     <string name="delete_sub_title">字幕の削除</string>
     <string name="delete_sub_message">この字幕を削除しますか?</string>
-    <string name="delete_sub_yes">はい</string>
-    <string name="delete_sub_no">いいえ</string>
     <string name="download_subtitle_title">字幕をダウンロード</string>
 
     <string name="no_result">結果がみつかりません</string>
     <string name="no_internet_connection">インターネット接続を確認してください</string>
-    <string name="some_error_occurred">何らかのエラーが発生しました。数秒後に再度試行してみてください。</string>
+    <string name="subs_download_error">サービスは利用できません。あとで再試行してください</string>
 
     <string name="network_browsing">ローカルネットワーク</string>
     <string name="browsing">ブラウジング</string>
@@ -500,7 +493,9 @@
     <string name="ml_external_storage_msg">デバイス %1$s をメディアライブラリに追加しますか?</string>
     <string name="ml_external_storage_accept">はい</string>
     <string name="ml_external_storage_decline">いいえ</string>
-    <string name="last_added_media">最近の追加</string>
+    <string name="auto_last_added_media">最後の追加</string>
+    <string name="auto_my_library">マイライブラリ</string>
+    <string name="auto_home">ホーム</string>
     <string name="no">いいえ</string>
     <string name="loading_medialibrary">メディアライブラリーを読み込んでいます…</string>
     <string name="yes">はい</string>
@@ -705,4 +700,54 @@
     <string name="group_similar">自動再グループ化</string>
     <string name="no_favorite">お気に入りがありません</string>
     <string name="empty_directory">空</string>
+    <string name="no_track">トラックがありません</string>
+
+    <string name="swipe_unlock">スワイプでロック解除</string>
+    <string name="swipe_unlock_no_touch">長押しでロック解除</string>
+    <string name="sub_result_by_name">%s に対する結果</string>
+    <string name="sub_result_by_name_season">シーズン %s</string>
+    <string name="sub_result_by_name_episode">エピソード %s</string>
+
+    <string name="sub_result_by_file">あなたのファイルに対する結果</string>
+    <string name="donate">VLCを支援</string>
+    <string name="donate_desc">ボランティアがVLCを開発することを支援します</string>
+    <string name="donate_subscribtion">毎月の支援を希望します</string>
+    <string name="donate_send">支援を始める</string>
+    <string name="donation_description">あなたのご支援がVideoLANアソシエーションによる\nアンドロイド用VLCアプリの改善を\nサポートします</string>
+    <string name="subscription_purchased">月次の支援に申し込みました</string>
+    <string name="subscription_cancel">プレイストアで支援を停止することが可能です</string>
+    <string name="subscription_cancel_tv">支援の停止方法</string>
+    <string name="donate_unsubscribe_tv">支援を停止するには、スマートフォンまたはコンピューターから %s を開くか、このコードをスキャンしてください:</string>
+    <string name="tip_jar">VLCを支援</string>
+    <string name="thank_you">ありがとうございます</string>
+    <string name="thank_you_desc">支援の申し込みありがとうございます!\nVLCの改善に役立てさせて頂きます</string>
+    <string name="donate_again">アプリの支援を再開</string>
+
+    <string name="mark_as_played">再生済みとしてマーク</string>
+    <string name="mark_all_as_played">すべてを再生済みとしてマーク</string>
+    <string name="new_group">新しいグループ</string>
+    <string name="new_group_desc">新しいグループを作成</string>
+
+    <string name="air_action_rewind">10秒戻す</string>
+    <string name="air_action_forward">10秒進める</string>
+    <string name="air_action_play_pause">一時停止/再開</string>
+    <string name="air_action_volume_up">音量を上げる</string>
+    <string name="air_action_volume_down">音量を下げる</string>
+    <string name="air_action_next">次の項目を再生</string>
+    <string name="air_action_previous">前の項目を再生</string>
+    <string name="allow_otg">OTGアクセスの許可</string>
+    <string name="allow_otg_description">VLCに対してアクセスを許可するOTGドライブを選択してください。</string>
+    <string name="timeout_infinite">無限</string>
+    <string name="timeout_short">短い</string>
+    <string name="timeout_normal">通常</string>
+    <string name="timeout_long">長い</string>
+    <string name="video_hud_timeout">ビデオプレイヤーが隠れた遅延を制御</string>
+    <string name="remove_from_history">履歴からの削除</string>
+    <string name="prefersmbv1">SMB1を採用</string>
+    <string name="prefersmbv1_summary">SMBサーバーのブラウジングに何らかの問題がある場合は、チェックを外してください</string>
+    <string name="apply_to_all">すべてのビデオに適用</string>
+    <string name="audio_delay_global">すべてのビデオのオーディオに %s ミリ秒の遅延を適用</string>
+    <string name="warning_stream_speed">再生速度を1以上にすると音声の途切れが発生することがあります</string>
+    <string name="go_to_folder">親をブラウズ</string>
+
 </resources>

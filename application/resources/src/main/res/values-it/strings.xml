@@ -127,8 +127,6 @@
     <string name="firstsong">Primo brano della scaletta</string>
     <string name="lastsong">Ultimo brano della scaletta</string>
 
-    <string name="locked">Bloccato</string>
-    <string name="unlocked">Sbloccato</string>
     <string name="surface_best_fit">Adatta allo schermo</string>
     <string name="surface_fit_screen">Adatta allo schermo</string>
     <string name="surface_fill">Riempi</string>
@@ -148,9 +146,6 @@
     <string name="brightness">Luminosità</string>
     <string name="advanced">opzioni avanzate</string>
     <string name="audio_boost_warning">Scorri ancora per andare oltre il 100%</string>
-    <string name="locked_in_portrait_mode">Bloccato in modalità verticale\n(Pressione lunga sul pulsante per annullare)</string>
-    <string name="locked_in_landscape_mode">Bloccato in modalità orizzontale\n(Pressione lunga sul pulsante per annullare)</string>
-    <string name="reset_orientation">Ripristina orientazione</string>
 
     <plurals name="track_channels_info_quantity">
         <item quantity="one">1 canale\n</item>
@@ -413,13 +408,11 @@
 
     <string name="delete_sub_title">Elimina sottotitoli</string>
     <string name="delete_sub_message">Vuoi eliminare questi sottotitoli?</string>
-    <string name="delete_sub_yes">Sì</string>
-    <string name="delete_sub_no">No</string>
     <string name="download_subtitle_title">Scarica sottotitoli</string>
 
     <string name="no_result">Nessun risultato trovato</string>
     <string name="no_internet_connection">Controlla la tua connessione a Internet</string>
-    <string name="some_error_occurred">Si sono verificati alcuni errori. Prova ancora tra pochi secondi</string>
+    <string name="subs_download_error">Servizio non disponibile. Riprova più tardi</string>
 
     <string name="network_browsing">Rete locale</string>
     <string name="browsing">Navigazione</string>
@@ -509,7 +502,9 @@
     <string name="ml_external_storage_msg">Vuoi che VLC aggiunga il dispositivo %1$s alla tua raccolta multimediale?</string>
     <string name="ml_external_storage_accept">Sì</string>
     <string name="ml_external_storage_decline">No</string>
-    <string name="last_added_media">Ultime aggiunte</string>
+    <string name="auto_last_added_media">Ultimi aggiunti</string>
+    <string name="auto_my_library">La mia raccolta</string>
+    <string name="auto_home">Home</string>
     <string name="no">No</string>
     <string name="loading_medialibrary">Caricamento raccolta multimediale…</string>
     <string name="yes">Sì</string>
@@ -716,4 +711,54 @@
     <string name="group_similar">Raggruppa automaticamente</string>
     <string name="no_favorite">Nessun preferito</string>
     <string name="empty_directory">Vuota</string>
+    <string name="no_track">Nessuna traccia</string>
+
+    <string name="swipe_unlock">Scorri per sbloccare</string>
+    <string name="swipe_unlock_no_touch">Pressione lunga per sbloccare</string>
+    <string name="sub_result_by_name">Risultati per %s</string>
+    <string name="sub_result_by_name_season">Stagione %s</string>
+    <string name="sub_result_by_name_episode">Episodio %s</string>
+
+    <string name="sub_result_by_file">Risultati per il tuo file</string>
+    <string name="donate">Aiuta VLC</string>
+    <string name="donate_desc">Supporta i volontari nella costruzione di VLC</string>
+    <string name="donate_subscribtion">Vorrei che questa fosse una sponsorizzazione mensile</string>
+    <string name="donate_send">Inizia la tua sponsorizzazione</string>
+    <string name="donation_description">La tua sponsorizzazione ci consentirà di:\nmigliorare l\'applicazione VLC per Android\nsupportare la VideoLAN Association</string>
+    <string name="subscription_purchased">Sei iscritto a una sponsorizzazione mensile</string>
+    <string name="subscription_cancel">Puoi annullare l\'iscrizione nel Play Store</string>
+    <string name="subscription_cancel_tv">Come annullare l\'iscrizione</string>
+    <string name="donate_unsubscribe_tv">Per annullare l\'iscrizione, apri %s su un telefono o un computer o esegui una scansione questo codice:</string>
+    <string name="tip_jar">Aiuta VLC</string>
+    <string name="thank_you">Grazie</string>
+    <string name="thank_you_desc">Grazie per la tua sponsorizzazione!\nCi aiuterà molto a migliorare VLC!</string>
+    <string name="donate_again">Sponsorizza ancora l\'applicazione</string>
+
+    <string name="mark_as_played">Marca come riprodotto</string>
+    <string name="mark_all_as_played">Marca tutti come riprodotti</string>
+    <string name="new_group">Nuovo gruppo</string>
+    <string name="new_group_desc">Crea un nuovo gruppo</string>
+
+    <string name="air_action_rewind">Riavvolgi 10 sec</string>
+    <string name="air_action_forward">Posiziona in avanti 10 sec</string>
+    <string name="air_action_play_pause">Sospendi/Riprendi riproduzione</string>
+    <string name="air_action_volume_up">Aumenta volume</string>
+    <string name="air_action_volume_down">Riduci volume</string>
+    <string name="air_action_next">Elemento successivo in riproduzione</string>
+    <string name="air_action_previous">Elemento precedente in riproduzione</string>
+    <string name="allow_otg">Consenti accesso OTG</string>
+    <string name="allow_otg_description">Seleziona il tuo drive OTG per consentire l\'accesso a VLC.</string>
+    <string name="timeout_infinite">Infinito</string>
+    <string name="timeout_short">Breve</string>
+    <string name="timeout_normal">Normale</string>
+    <string name="timeout_long">Lungo</string>
+    <string name="video_hud_timeout">Ritardo di occultamento dei controlli del lettore video</string>
+    <string name="remove_from_history">Rimuovi dalla cronologia</string>
+    <string name="prefersmbv1">Preferisci SMB 1</string>
+    <string name="prefersmbv1_summary">Deseleziona questa impostazione se hai difficoltà a sfogliare il tuo server SMB</string>
+    <string name="apply_to_all">Applica a tutti i video</string>
+    <string name="audio_delay_global">Ritardo audio impostato a %s ms per tutti i video</string>
+    <string name="warning_stream_speed">L\'aumento della velocità di riproduzione oltre 1 per i flussi potrebbe causare una sequenza non costante di fotogrammi </string>
+    <string name="go_to_folder">Sfoglia superiore</string>
+
 </resources>

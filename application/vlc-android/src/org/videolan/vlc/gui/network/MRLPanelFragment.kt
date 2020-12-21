@@ -22,11 +22,8 @@ package org.videolan.vlc.gui.network
 
 import android.content.ClipboardManager
 import android.content.Context
-import android.content.Intent
 import android.graphics.Rect
-import android.net.Uri
 import android.os.Bundle
-import android.text.TextUtils
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
@@ -34,8 +31,9 @@ import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.net.toUri
+import androidx.core.view.doOnLayout
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.GridLayoutManager
@@ -44,16 +42,12 @@ import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.ObsoleteCoroutinesApi
 import org.videolan.medialibrary.MLServiceLocator
-import org.videolan.medialibrary.interfaces.media.MediaWrapper
 import org.videolan.tools.Settings
 import org.videolan.tools.isValidUrl
 import org.videolan.vlc.R
 import org.videolan.vlc.databinding.MrlPanelBinding
 import org.videolan.vlc.gui.ContentActivity
 import org.videolan.vlc.gui.MainActivity
-import org.videolan.vlc.gui.dialogs.RENAME_DIALOG_MEDIA
-import org.videolan.vlc.gui.dialogs.RENAME_DIALOG_NEW_NAME
-import org.videolan.vlc.gui.dialogs.RENAME_DIALOG_REQUEST_CODE
 import org.videolan.vlc.gui.helpers.UiTools
 import org.videolan.vlc.interfaces.BrowserFragmentInterface
 import org.videolan.vlc.viewmodels.StreamsModel
@@ -109,27 +103,18 @@ class MRLPanelFragment : Fragment(), View.OnKeyListener, TextView.OnEditorAction
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        viewModel.dataset.observe(requireActivity(), Observer { adapter.update(it) })
-        viewModel.loading.observe(requireActivity(), Observer { (activity as? MainActivity)?.refreshing = it })
+        viewModel.dataset.observe(requireActivity(), { adapter.update(it) })
+        viewModel.loading.observe(requireActivity(), { (activity as? MainActivity)?.refreshing = it })
     }
 
     override fun onResume() {
         super.onResume()
-        val clipBoardManager = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        val text = clipBoardManager.primaryClip?.getItemAt(0)?.text?.toString()
-        if (text.isValidUrl()) viewModel.observableSearchText.set(text)
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        if (requestCode == RENAME_DIALOG_REQUEST_CODE) {
-            data?.let {
-
-                val media = it.getParcelableExtra<MediaWrapper>(RENAME_DIALOG_MEDIA)
-                val newName = it.getStringExtra(RENAME_DIALOG_NEW_NAME)
-                viewModel.rename(media, newName)
-            }
+        //Needed after privacy changes made in Android 10
+        editText.doOnLayout {
+            val clipBoardManager = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+            val text = clipBoardManager?.primaryClip?.getItemAt(0)?.text?.toString()
+            if (text.isValidUrl()) viewModel.observableSearchText.set(text)
         }
-        super.onActivityResult(requestCode, resultCode, data)
     }
 
     override fun onStart() {
@@ -144,8 +129,8 @@ class MRLPanelFragment : Fragment(), View.OnKeyListener, TextView.OnEditorAction
             event.action == KeyEvent.ACTION_DOWN && event.keyCode == KeyEvent.KEYCODE_ENTER) && processUri()
 
     private fun processUri(): Boolean {
-        if (!TextUtils.isEmpty(viewModel.observableSearchText.get())) {
-            val mw = MLServiceLocator.getAbstractMediaWrapper(Uri.parse(viewModel.observableSearchText.get()?.trim()))
+        if (!viewModel.observableSearchText.get().isNullOrEmpty()) {
+            val mw = MLServiceLocator.getAbstractMediaWrapper(viewModel.observableSearchText.get()?.trim()?.toUri())
             playMedia(mw)
             viewModel.observableSearchText.set("")
             return true

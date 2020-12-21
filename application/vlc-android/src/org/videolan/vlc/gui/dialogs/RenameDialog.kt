@@ -55,6 +55,7 @@ import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.widget.Button
 import android.widget.TextView
+import androidx.core.os.bundleOf
 import com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
 import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -63,13 +64,12 @@ import org.videolan.medialibrary.media.MediaLibraryItem
 import org.videolan.vlc.R
 
 const val RENAME_DIALOG_MEDIA = "RENAME_DIALOG_MEDIA"
-const val RENAME_DIALOG_NEW_NAME = "RENAME_DIALOG_NEW_NAME"
-const val RENAME_DIALOG_REQUEST_CODE = 1
 
 @ObsoleteCoroutinesApi
 @ExperimentalCoroutinesApi
 class RenameDialog : VLCBottomSheetDialogFragment() {
 
+    private lateinit var listener: (media: MediaLibraryItem, name: String) -> Unit
     private lateinit var renameButton: Button
     private lateinit var newNameInputtext: TextInputEditText
     private lateinit var media: MediaLibraryItem
@@ -79,11 +79,13 @@ class RenameDialog : VLCBottomSheetDialogFragment() {
         fun newInstance(media: MediaLibraryItem): RenameDialog {
 
             return RenameDialog().apply {
-                val args = Bundle()
-                args.putParcelable(RENAME_DIALOG_MEDIA, media)
-                arguments = args
+                arguments = bundleOf(RENAME_DIALOG_MEDIA to media)
             }
         }
+    }
+
+    fun setListener(listener:(media:MediaLibraryItem, name:String)->Unit) {
+        this.listener = listener
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -122,10 +124,7 @@ class RenameDialog : VLCBottomSheetDialogFragment() {
 
     private fun performRename() {
         if (newNameInputtext.text.toString().isNotEmpty()) {
-            val intent = Intent()
-            intent.putExtra(RENAME_DIALOG_MEDIA,media)
-            intent.putExtra(RENAME_DIALOG_NEW_NAME,newNameInputtext.text.toString())
-            targetFragment?.onActivityResult(RENAME_DIALOG_REQUEST_CODE, Activity.RESULT_OK, intent)
+            listener.invoke(media, newNameInputtext.text.toString())
             dismiss()
         }
     }

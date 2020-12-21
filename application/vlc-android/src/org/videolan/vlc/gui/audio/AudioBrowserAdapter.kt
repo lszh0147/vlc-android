@@ -47,6 +47,7 @@ import org.videolan.libvlc.util.AndroidUtil
 import org.videolan.medialibrary.interfaces.media.Artist
 import org.videolan.medialibrary.media.MediaLibraryItem
 import org.videolan.medialibrary.media.MediaLibraryItem.FLAG_SELECTED
+import org.videolan.medialibrary.media.MediaLibraryItem.TYPE_PLAYLIST
 import org.videolan.resources.AppContextProvider
 import org.videolan.resources.UPDATE_SELECTION
 import org.videolan.resources.interfaces.FocusListener
@@ -104,7 +105,7 @@ class AudioBrowserAdapter @JvmOverloads constructor(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AbstractMediaItemViewHolder<ViewDataBinding> {
         if (!::inflater.isInitialized) {
-            inflater = parent.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+            inflater = LayoutInflater.from(parent.context)
         }
         return if (displayInCard()) {
             val binding = AudioBrowserCardItemBinding.inflate(inflater, parent, false)
@@ -252,6 +253,11 @@ class AudioBrowserAdapter @JvmOverloads constructor(
             binding.imageWidth = listImageWidth
         }
 
+        override fun selectView(selected: Boolean) {
+            super.selectView(selected)
+            binding.itemMore.visibility = if (multiSelectHelper.inActionMode) View.INVISIBLE else View.VISIBLE
+        }
+
         override fun setItem(item: MediaLibraryItem?) {
             binding.item = item
         }
@@ -289,6 +295,11 @@ class AudioBrowserAdapter @JvmOverloads constructor(
             binding.imageWidth = cardSize
             binding.container.layoutParams.width = cardSize
 
+        }
+
+        override fun selectView(selected: Boolean) {
+            super.selectView(selected)
+            binding.itemMore.visibility = if (multiSelectHelper.inActionMode) View.INVISIBLE else View.VISIBLE
         }
 
         override fun setItem(item: MediaLibraryItem?) {
@@ -360,7 +371,7 @@ class AudioBrowserAdapter @JvmOverloads constructor(
                     oldMedia: MediaLibraryItem, newMedia: MediaLibraryItem): Boolean {
                 return if (preventNextAnim) {
                     true
-                } else oldMedia === newMedia || oldMedia.itemType == newMedia.itemType && oldMedia.equals(newMedia)
+                } else oldMedia === newMedia || oldMedia.title == newMedia.title && oldMedia.itemType == newMedia.itemType && oldMedia.tracksCount == newMedia.tracksCount && oldMedia.equals(newMedia)
             }
 
             override fun areContentsTheSame(

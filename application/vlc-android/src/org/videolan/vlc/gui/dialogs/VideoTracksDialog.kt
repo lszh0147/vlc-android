@@ -25,7 +25,6 @@
 package org.videolan.vlc.gui.dialogs
 
 import android.os.Bundle
-import android.util.Log
 import android.view.*
 import androidx.appcompat.widget.PopupMenu
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -40,7 +39,6 @@ import org.videolan.tools.CoroutineContextProvider
 import org.videolan.tools.DependencyProvider
 import org.videolan.tools.setGone
 import org.videolan.tools.setVisible
-import org.videolan.vlc.BuildConfig
 import org.videolan.vlc.PlaybackService
 import org.videolan.vlc.R
 import org.videolan.vlc.databinding.PlayerOverlayTracksBinding
@@ -57,9 +55,10 @@ class VideoTracksDialog : VLCBottomSheetDialogFragment() {
 
     private val coroutineContextProvider: CoroutineContextProvider
 
-    override fun initialFocusedView(): View = binding.tracksSeparator2
+    override fun initialFocusedView(): View = binding.subtitleTracks.emptyView
 
     lateinit var menuItemListener:(Int) -> Unit
+    lateinit var trackSelectionListener:(Int, TrackType) -> Unit
 
     init {
         VideoTracksDialog.registerCreator { CoroutineContextProvider() }
@@ -72,42 +71,39 @@ class VideoTracksDialog : VLCBottomSheetDialogFragment() {
     }
 
     private fun onServiceChanged(service: PlaybackService?) {
-        service?.let { service ->
-            if (service.videoTracksCount <= 2) {
+        service?.let { playbackService ->
+            if (playbackService.videoTracksCount <= 2) {
                 binding.videoTracks.trackContainer.setGone()
                 binding.tracksSeparator3.setGone()
             }
-            if (service.audioTracksCount <= 0) {
+            if (playbackService.audioTracksCount <= 0) {
                 binding.audioTracks.trackContainer.setGone()
                 binding.tracksSeparator2.setGone()
             }
 
-            service.videoTracks?.let { trackList ->
-                val trackAdapter = TrackAdapter(trackList as Array<MediaPlayer.TrackDescription>, trackList.first { it.id == service.videoTrack })
+            playbackService.videoTracks?.let { trackList ->
+                val trackAdapter = TrackAdapter(trackList as Array<MediaPlayer.TrackDescription>, trackList.firstOrNull { it.id == playbackService.videoTrack })
                 trackAdapter.setOnTrackSelectedListener { track ->
-                    if (BuildConfig.DEBUG) Log.d(this::class.java.simpleName, "Setting track: $track")
-                    service.setVideoTrack(track.id)
+                    trackSelectionListener.invoke(track.id, TrackType.VIDEO)
                 }
                 binding.videoTracks.trackList.adapter = trackAdapter
             }
-            service.audioTracks?.let { trackList ->
-                val trackAdapter = TrackAdapter(trackList as Array<MediaPlayer.TrackDescription>, trackList.first { it.id == service.audioTrack })
+            playbackService.audioTracks?.let { trackList ->
+                val trackAdapter = TrackAdapter(trackList as Array<MediaPlayer.TrackDescription>, trackList.firstOrNull { it.id == playbackService.audioTrack })
                 trackAdapter.setOnTrackSelectedListener { track ->
-                    if (BuildConfig.DEBUG) Log.d(this::class.java.simpleName, "Setting track: $track")
-                    service.setAudioTrack(track.id)
+                    trackSelectionListener.invoke(track.id, TrackType.AUDIO)
                 }
                 binding.audioTracks.trackList.adapter = trackAdapter
             }
-            service.spuTracks?.let { trackList ->
-                val trackAdapter = TrackAdapter(trackList as Array<MediaPlayer.TrackDescription>, trackList.first { it.id == service.spuTrack })
+            playbackService.spuTracks?.let { trackList ->
+                val trackAdapter = TrackAdapter(trackList as Array<MediaPlayer.TrackDescription>, trackList.firstOrNull { it.id == playbackService.spuTrack })
                 trackAdapter.setOnTrackSelectedListener { track ->
-                    if (BuildConfig.DEBUG) Log.d(this::class.java.simpleName, "Setting track: $track")
-                    service.setSpuTrack(track.id)
+                    trackSelectionListener.invoke(track.id, TrackType.SPU)
                 }
                 binding.subtitleTracks.trackList.adapter = trackAdapter
                 if (trackList.isEmpty()) binding.subtitleTracks.emptyView.setVisible()
             }
-            if (service.spuTracks == null) binding.subtitleTracks.emptyView.setVisible()
+            if (playbackService.spuTracks == null) binding.subtitleTracks.emptyView.setVisible()
         }
     }
 
@@ -136,8 +132,8 @@ class VideoTracksDialog : VLCBottomSheetDialogFragment() {
             popup.menuInflater.inflate(R.menu.audio_track_menu, popup.menu)
             popup.show()
             popup.setOnMenuItemClickListener {
-                dismiss()
                 menuItemListener.invoke(it.itemId)
+                dismiss()
                 true
             }
         }
@@ -147,8 +143,8 @@ class VideoTracksDialog : VLCBottomSheetDialogFragment() {
             popup.menuInflater.inflate(R.menu.subtitle_track_menu, popup.menu)
             popup.show()
             popup.setOnMenuItemClickListener {
-                dismiss()
                 menuItemListener.invoke(it.itemId)
+                dismiss()
                 true
             }
         }
@@ -158,6 +154,10 @@ class VideoTracksDialog : VLCBottomSheetDialogFragment() {
     companion object : DependencyProvider<Any>() {
 
         val TAG = "VLC/SavePlaylistDialog"
+    }
+
+    enum class TrackType {
+        VIDEO, AUDIO, SPU
     }
 }
 

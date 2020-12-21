@@ -425,13 +425,11 @@
 
     <string name="delete_sub_title">Delete subtitle</string>
     <string name="delete_sub_message">Do you want to delete this subtitle?</string>
-    <string name="delete_sub_yes">Yes</string>
-    <string name="delete_sub_no">No</string>
     <string name="download_subtitle_title">Download Subtitle</string>
 
     <string name="no_result">No results found</string>
     <string name="no_internet_connection">Check your internet connection</string>
-    <string name="some_error_occurred">Some error occurred. Please try again in a few seconds</string>
+    <string name="subs_download_error">Service unavailable. Please try again later</string>
 
     <string name="network_browsing">Local Network</string>
     <string name="browsing">Browsing</string>
@@ -523,7 +521,9 @@
     <string name="ml_external_storage_msg">Do you want VLC to add device %1$s to your medialibrary?</string>
     <string name="ml_external_storage_accept">Yes</string>
     <string name="ml_external_storage_decline">No</string>
-    <string name="last_added_media">last added</string>
+    <string name="auto_last_added_media">Last added</string>
+    <string name="auto_my_library">My library</string>
+    <string name="auto_home">Home</string>
     <string name="no">No</string>
     <string name="loading_medialibrary">Loading Medialibrary…</string>
     <string name="yes">Yes</string>
@@ -734,4 +734,50 @@
 
     <string name="swipe_unlock">Swipe to unlock</string>
     <string name="swipe_unlock_no_touch">Long press to unlock</string>
+    <string name="sub_result_by_name">Results for %s</string>
+    <string name="sub_result_by_name_season">Season %s</string>
+    <string name="sub_result_by_name_episode">Episode %s</string>
+
+    <string name="sub_result_by_file">Results for your file</string>
+    <string name="donate">Help VLC</string>
+    <string name="donate_desc">Support the volunteers building VLC</string>
+    <string name="donate_subscribtion">I would like this to be a monthly sponsorship</string>
+    <string name="donate_send">Start your sponsorship</string>
+    <string name="donation_description">Your sponsorship will allow us to:\nImprove the VLC app for Android\nSupport the VideoLAN Association</string>
+    <string name="subscription_purchased">You are subscribed to a monthly sponsorship</string>
+    <string name="subscription_cancel">You can unsubscribe in the Play Store</string>
+    <string name="subscription_cancel_tv">How to unsubscribe</string>
+    <string name="donate_unsubscribe_tv">To unsubscribe, please open %s on a phone or a computer or scan this code:</string>
+    <string name="tip_jar">Help VLC</string>
+    <string name="thank_you">Thank you</string>
+    <string name="thank_you_desc">Thank you for your sponsorship!\nIt will help us a lot improving VLC!</string>
+    <string name="donate_again">Sponsor the app again</string>
+
+    <string name="mark_as_played">Mark as played</string>
+    <string name="mark_all_as_played">Mark all as played</string>
+    <string name="new_group">New group</string>
+    <string name="new_group_desc">Create a new group</string>
+
+    <string name="air_action_rewind">Rewind 10 sec</string>
+    <string name="air_action_forward">Seek forward 10 sec</string>
+    <string name="air_action_play_pause">Pause/Resume playback</string>
+    <string name="air_action_volume_up">Volume up</string>
+    <string name="air_action_volume_down">Volume down</string>
+    <string name="air_action_next">Next item in playback</string>
+    <string name="air_action_previous">Previous item in playback</string>
+    <string name="allow_otg">Allow OTG access</string>
+    <string name="allow_otg_description">Please select your OTG drive to allow access to VLC.</string>
+    <string name="timeout_infinite">Infinite</string>
+    <string name="timeout_short">Short</string>
+    <string name="timeout_normal">Normal</string>
+    <string name="timeout_long">Long</string>
+    <string name="video_hud_timeout">Video player controls hiding delay</string>
+    <string name="remove_from_history">Remove from history</string>
+    <string name="prefersmbv1">Prefer SMB 1</string>
+    <string name="prefersmbv1_summary">Uncheck this setting if you have some difficulties browsing your SMB server</string>
+    <string name="apply_to_all">Apply to all videos</string>
+    <string name="audio_delay_global">Audio delay set to %s ms for all videos</string>
+    <string name="warning_stream_speed">Increasing playback speed over 1 for streams may cause stuttering</string>
+    <string name="go_to_folder">Browse parent</string>
+
 </resources>

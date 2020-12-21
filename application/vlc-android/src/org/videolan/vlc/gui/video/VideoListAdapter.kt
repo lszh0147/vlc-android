@@ -22,9 +22,7 @@ package org.videolan.vlc.gui.video
 
 import android.annotation.SuppressLint
 import android.annotation.TargetApi
-import android.content.Context
 import android.os.Build
-import android.text.TextUtils
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -38,7 +36,7 @@ import androidx.lifecycle.Observer
 import androidx.paging.PagedListAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.GridLayoutManager
-import kotlinx.coroutines.*
+import kotlinx.coroutines.launch
 import org.videolan.libvlc.util.AndroidUtil
 import org.videolan.medialibrary.Tools
 import org.videolan.medialibrary.interfaces.Medialibrary
@@ -90,7 +88,7 @@ class VideoListAdapter(private var isSeenMediaMarkerVisible: Boolean
         get() = currentList?.snapshot() ?: emptyList()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val inflater = parent.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+        val inflater = LayoutInflater.from(parent.context)
         val binding = DataBindingUtil.inflate<ViewDataBinding>(inflater, if (isListMode) R.layout.video_list_card else R.layout.video_grid_card, parent, false)
         if (!isListMode) {
             val params = binding.root.layoutParams as GridLayoutManager.LayoutParams
@@ -171,7 +169,7 @@ class VideoListAdapter(private var isSeenMediaMarkerVisible: Boolean
                             progress = (lastTime / 1000).toInt()
                         }
                         if (isListMode && resolution !== null) {
-                            "${Tools.millisToText(item.length)} | $resolution"
+                            "${Tools.millisToText(item.length)}  •  $resolution"
                         } else Tools.millisToText(item.length)
                     } else null
                 }
@@ -195,6 +193,7 @@ class VideoListAdapter(private var isSeenMediaMarkerVisible: Boolean
     inner class ViewHolder(binding: ViewDataBinding) : SelectorViewHolder<ViewDataBinding>(binding) {
         val overlay: ImageView = itemView.findViewById(R.id.ml_item_overlay)
         val title : TextView = itemView.findViewById(R.id.ml_item_title)
+        val more : ImageView = itemView.findViewById(R.id.item_more)
 
         init {
             binding.setVariable(BR.holder, this)
@@ -230,6 +229,7 @@ class VideoListAdapter(private var isSeenMediaMarkerVisible: Boolean
             overlay.setImageResource(if (selected) R.drawable.ic_action_mode_select_1610 else if (isListMode) 0 else R.drawable.black_gradient)
             if (isListMode) overlay.visibility = if (selected) View.VISIBLE else View.GONE
             super.selectView(selected)
+            more.visibility = if (multiSelectHelper.inActionMode) View.INVISIBLE else View.VISIBLE
         }
 
         override fun isSelected() = multiSelectHelper.isSelected(layoutPosition)
@@ -247,7 +247,7 @@ class VideoListAdapter(private var isSeenMediaMarkerVisible: Boolean
         override fun areContentsTheSame(oldItem: MediaLibraryItem, newItem: MediaLibraryItem): Boolean {
             return if (oldItem is MediaWrapper && newItem is MediaWrapper) {
                 oldItem === newItem || (oldItem.displayTime == newItem.displayTime
-                        && TextUtils.equals(oldItem.artworkMrl, newItem.artworkMrl)
+                        && oldItem.artworkMrl == newItem.artworkMrl
                         && oldItem.seen == newItem.seen)
             } //else if (oldItem is FolderImpl && newItem is FolderImpl) return oldItem === newItem || (oldItem.title == newItem.title && oldItem.artworkMrl == newItem.artworkMrl)
             else if (oldItem is VideoGroup && newItem is VideoGroup) {
@@ -260,7 +260,7 @@ class VideoListAdapter(private var isSeenMediaMarkerVisible: Boolean
         override fun getChangePayload(oldItem: MediaLibraryItem, newItem: MediaLibraryItem) = when {
             (oldItem is MediaWrapper && newItem is MediaWrapper) && oldItem.displayTime != newItem.displayTime -> UPDATE_TIME
             (oldItem is VideoGroup && newItem is VideoGroup) -> UPDATE_VIDEO_GROUP
-            !TextUtils.equals(oldItem.artworkMrl, newItem.artworkMrl) -> UPDATE_THUMB
+            oldItem.artworkMrl != newItem.artworkMrl -> UPDATE_THUMB
             else -> UPDATE_SEEN
         }
     }
@@ -273,7 +273,7 @@ class VideoListAdapter(private var isSeenMediaMarkerVisible: Boolean
 @BindingAdapter("time", "resolution")
 fun setLayoutHeight(view: View, time: String, resolution: String) {
     val layoutParams = view.layoutParams
-    layoutParams.height = if (TextUtils.isEmpty(time) && TextUtils.isEmpty(resolution))
+    layoutParams.height = if (time.isEmpty() && resolution.isEmpty())
         ViewGroup.LayoutParams.MATCH_PARENT
     else
         ViewGroup.LayoutParams.WRAP_CONTENT

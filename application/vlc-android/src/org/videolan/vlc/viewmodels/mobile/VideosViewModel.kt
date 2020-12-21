@@ -89,6 +89,7 @@ class VideosViewModel(context: Context, type: VideoGroupingType, val folder: Fol
             when (item) {
                 is Folder -> item.getAll()
                 is VideoGroup -> item.getAll()
+                is MediaWrapper -> listOf(item)
                 else -> null
             }
         }?.let { MediaUtils.openList(context, it, 0) }
@@ -126,11 +127,11 @@ class VideosViewModel(context: Context, type: VideoGroupingType, val folder: Fol
         MediaUtils.appendMedia(context, list)
     }
 
-    internal fun playVideo(context: Activity?, mw: MediaWrapper, position: Int, fromStart: Boolean = false) {
+    internal fun playVideo(context: Activity?, mw: MediaWrapper, position: Int, fromStart: Boolean = false, forceAll:Boolean = false) {
         if (context === null) return
         mw.removeFlags(MediaWrapper.MEDIA_FORCE_AUDIO)
         val settings = Settings.getInstance(context)
-        if (settings.getBoolean(FORCE_PLAY_ALL, false)) {
+        if (!fromStart && (settings.getBoolean(FORCE_PLAY_ALL, false) || forceAll)) {
             when(val prov = provider) {
                 is VideosProvider -> MediaUtils.playAll(context, prov, position, false)
                 is FoldersProvider -> MediaUtils.playAllTracks(context, prov, position, false)
@@ -196,6 +197,7 @@ class VideosViewModel(context: Context, type: VideoGroupingType, val folder: Fol
             val newGroup = medialibrary.createVideoGroup(medias.map { it.id }.toLongArray())
             if (newGroup.title.isNullOrBlank()) {
                 newGroup.rename(medias[0].title)
+                newGroup.title = medias[0].title
             }
             newGroup
         }
@@ -203,6 +205,19 @@ class VideosViewModel(context: Context, type: VideoGroupingType, val folder: Fol
 
     suspend fun groupSimilar(media: MediaWrapper) = withContext(Dispatchers.IO) {
         medialibrary.regroup(media.id)
+    }
+
+    suspend fun markAsPlayed(media: MediaLibraryItem) = withContext(Dispatchers.IO) {
+        when (media) {
+            is VideoGroup -> media.getAll().forEach {
+                it.setLongMeta(MediaWrapper.META_SEEN, it.seen + 1)
+            }
+            is Folder -> media.getAll().forEach {
+                it.setLongMeta(MediaWrapper.META_SEEN, it.seen + 1)
+            }
+            is MediaWrapper -> media.setLongMeta(MediaWrapper.META_SEEN, media.seen + 1)
+            else -> {}
+        }
     }
 }
 

@@ -25,7 +25,6 @@ package org.videolan.vlc.gui
 
 import android.annotation.SuppressLint
 import android.media.AudioManager
-import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Message
@@ -39,8 +38,8 @@ import android.widget.TextView
 import androidx.appcompat.widget.Toolbar
 import androidx.appcompat.widget.ViewStubCompat
 import androidx.coordinatorlayout.widget.CoordinatorLayout
+import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.appbar.AppBarLayout
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -93,6 +92,7 @@ open class AudioPlayerContainerActivity : BaseActivity() {
     private lateinit var resumeCard: Snackbar
 
     private var preventRescan = false
+    private var playerShown = false
 
     protected val currentFragment: Fragment?
         get() = supportFragmentManager.findFragmentById(R.id.fragment_placeholder)
@@ -108,6 +108,11 @@ open class AudioPlayerContainerActivity : BaseActivity() {
 
     val isAudioPlayerExpanded: Boolean
         get() = isAudioPlayerReady && playerBehavior.state == STATE_EXPANDED
+
+    override fun getSnackAnchorView(): View? {
+      return  if (::audioPlayerContainer.isInitialized && audioPlayerContainer.visibility != View.GONE && ::playerBehavior.isInitialized && playerBehavior.state == STATE_COLLAPSED)
+          audioPlayerContainer else if (::playerBehavior.isInitialized && playerBehavior.state == STATE_EXPANDED) findViewById(android.R.id.content) else findViewById(R.id.coordinator) ?: findViewById(android.R.id.content)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         //Init Medialibrary if KO
@@ -149,6 +154,7 @@ open class AudioPlayerContainerActivity : BaseActivity() {
         val bottomBehavior = bottomBar?.let { BottomNavigationBehavior.from(it) as BottomNavigationBehavior<View> }
                 ?: null
         playerBehavior.peekHeight = resources.getDimensionPixelSize(R.dimen.player_peek_height)
+        updateFragmentMargins()
         playerBehavior.addBottomSheetCallback(object : BottomSheetCallback() {
             override fun onSlide(bottomSheet: View, slideOffset: Float) {
                 audioPlayer.onSlide(slideOffset)
@@ -165,10 +171,20 @@ open class AudioPlayerContainerActivity : BaseActivity() {
                 onPlayerStateChanged(bottomSheet, newState)
                 audioPlayer.onStateChanged(newState)
                 if (newState == STATE_COLLAPSED || newState == STATE_HIDDEN) removeTipViewIfDisplayed()
+                updateFragmentMargins(newState)
             }
         })
         showTipViewIfNeeded(R.id.audio_player_tips, PREF_AUDIOPLAYER_TIPS_SHOWN)
     }
+
+    fun updateFragmentMargins(state: Int = STATE_COLLAPSED) {
+        playerShown = state != STATE_HIDDEN
+        supportFragmentManager.fragments.forEach { fragment ->
+            if (fragment is BaseFragment) fragment.updateAudioPlayerMargin()
+        }
+    }
+
+    fun getAudioMargin() = if (playerShown) resources.getDimensionPixelSize(R.dimen.player_peek_height) else 0
 
     override fun onSaveInstanceState(outState: Bundle) {
         outState.putBoolean(BOTTOM_IS_HIDDEN, bottomBar?.let { it.translationY != 0F }
@@ -353,24 +369,24 @@ open class AudioPlayerContainerActivity : BaseActivity() {
     protected open fun onPlayerStateChanged(bottomSheet: View, newState: Int) {}
 
     private fun registerLiveData() {
-        PlaylistManager.showAudioPlayer.observe(this, Observer { showPlayer ->
+        PlaylistManager.showAudioPlayer.observe(this, { showPlayer ->
             if (showPlayer == true) showAudioPlayer()
             else {
                 hideAudioPlayer()
                 if (isAudioPlayerReady) playerBehavior.lock(true)
             }
         })
-        MediaParsingService.progress.observe(this, Observer { scanProgress ->
+        MediaParsingService.progress.observe(this, { scanProgress ->
             if (scanProgress == null || !Medialibrary.getInstance().isWorking) {
                 updateProgressVisibility(false)
-                return@Observer
+                return@observe
             }
             updateProgressVisibility(true, scanProgress.discovery, scanProgress.parsing)
             scanProgressText?.text = scanProgress.discovery
             scanProgressBar?.progress = scanProgress.parsing
         })
-        MediaParsingService.newStorages.observe(this, Observer<List<String>> { devices ->
-            if (devices == null) return@Observer
+        MediaParsingService.newStorages.observe(this, { devices ->
+            if (devices == null) return@observe
             for (device in devices) UiTools.newStorageDetected(this@AudioPlayerContainerActivity, device)
             MediaParsingService.newStorages.setValue(null)
         })
@@ -381,7 +397,7 @@ open class AudioPlayerContainerActivity : BaseActivity() {
         delay(1000L)
         if (PlaylistManager.showAudioPlayer.value == true) return@launchWhenStarted
         val song = settings.getString("current_song", null) ?: return@launchWhenStarted
-        val media = getFromMl { getMedia(Uri.parse(song)) } ?: return@launchWhenStarted
+        val media = getFromMl { getMedia(song.toUri()) } ?: return@launchWhenStarted
         val title = media.title
         resumeCard = Snackbar.make(appBarLayout, getString(R.string.resume_card_message, title), Snackbar.LENGTH_LONG)
                 .setAction(R.string.play) { PlaybackService.loadLastAudio(it.context) }

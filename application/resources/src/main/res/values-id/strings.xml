@@ -72,8 +72,6 @@
     <string name="repeat_title">Mode perulangan</string>
     <string name="previous">Sebelumnya</string>
     <string name="stop">Henti</string>
-    <string name="locked">Terkunci</string>
-    <string name="unlocked">Terbuka</string>
     <string name="surface_best_fit">Paling sesuai</string>
     <string name="surface_fill">Isi</string>
     <string name="surface_original">Tengah</string>
@@ -220,8 +218,6 @@
 
     <string name="delete_sub_title">Hapus terjemahan</string>
     <string name="delete_sub_message">Anda ingin menghapus terjemahan ini?</string>
-    <string name="delete_sub_yes">Ya</string>
-    <string name="delete_sub_no">Tidak</string>
     <string name="download_subtitle_title">Unduh Terjemahan</string>
 
     <string name="no_internet_connection">Cek koneksi internet Anda</string>
